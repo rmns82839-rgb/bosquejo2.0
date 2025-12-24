@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Bosquejo - Studio Edition</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <div id="floating-toolbar">
+        <div class="side-tab left-tab" onclick="toggleRibbon('left')">🖋️</div>
+
+        <div id="left-ribbon" class="ribbon hidden">
+            <div class="scroll-container">
+                <button type="button" id="btn-bold" onmousedown="execCmd('bold', event)"><b>B</b></button>
+                <button type="button" id="btn-italic" onmousedown="execCmd('italic', event)"><i>I</i></button>
+                <button type="button" id="btn-underline" onmousedown="execCmd('underline', event)"><u>U</u></button>
+                <div class="divider"></div>
+                <div class="color-picker-container">
+                    <input type="color" id="fontColor" oninput="execCmd('foreColor', event, this.value)" title="Color de letra">
+                </div>
+                <div class="divider"></div>
+                <select onchange="if(this.value) window.open(this.value, '_blank'); this.value='';" class="study-select">
+                    <option value="">📚 Estudio</option>
+                    <option value="notas.html">📝 Mis Notas</option>
+<option value="glosario.html">📖 Glosario Técnico</option>
+<option value="versículos.html">📑 Versículos Clave</option>
+                    <option value="https://biblehub.com/interlinear/">Interlineal</option>
+                    <option value="https://www.blueletterbible.org/">Blue Letter</option>
+                    <option value="https://www.biblegateway.com/">Bible Gateway</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="hammer-icon">🔨</div>
+        
+        <div id="right-ribbon" class="ribbon hidden">
+            <div class="scroll-container">
+                <button onclick="addSection('Texto Bíblico', '#f1c40f')">📖 Texto</button>
+                <button onclick="addSection('Tema / Título', '#3498db')">🏷️ Tema</button>
+                <select onchange="addPurpose(this.value); this.value='';" class="purpose-select"> <option value="">🎯 Elegir Propósito</option> <option value="Evangelístico">Evangelístico</option> <option value="Aliento (Consuelo)">Aliento (Consuelo)</option> <option value="Doctrinal (Didáctico)">Doctrinal (Didáctico)</option> <option value="Devocional">Devocional</option> <option value="Consagración">Consagración</option> <option value="Ético-Moral">Ético-Moral</option> </select>
+                <button onclick="addSection('Introducción', '#34495e')">🎤 Intro</button>
+                <button onclick="addMainPoint()">Ⅰ Punto</button>
+                <button onclick="addSubPoint()">Ⓐ Sub</button>
+                <button onclick="addSection('Conclusión', '#e74c3c')">🏁 Conclusión</button>
+                <button onclick="addSection('Glosario Final', '#16a085')">📚 Glosario Final</button>
+                
+                <div class="divider"></div>
+                <button onclick="generatePDF()" class="btn-success">PDF</button>
+                <button onclick="clearData()" class="btn-danger">🗑️</button>
+            </div>
+        </div>
+
+        <div class="side-tab right-tab" onclick="toggleRibbon('right')">📋</div>
+    </div>
+
+    <div id="document-area">
+        <div id="paper">
+            <h1 contenteditable="true" id="main-title" class="placeholder" data-placeholder="TÍTULO DEL SERMÓN" oninput="saveData()"></h1>
+            <div id="sections-container"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

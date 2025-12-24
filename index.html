@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,6 +14,17 @@
             outline: none !important;
             background: transparent !important;
         }
+        /* Estilo para los nuevos botones de deshacer/rehacer */
+        .btn-history {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            transition: 0.2s;
+        }
+        .btn-history:active { transform: scale(0.8); }
     </style>
 </head>
 <body>
@@ -23,6 +33,11 @@
         
         <div id="left-ribbon" class="ribbon hidden">
             <div class="scroll-container">
+                <button type="button" class="btn-history" title="Deshacer" onmousedown="historyUndo(event)">⟲</button>
+                <button type="button" class="btn-history" title="Rehacer" onmousedown="historyRedo(event)">⟳</button>
+                
+                <div class="divider"></div>
+
                 <button type="button" id="btn-bold" onmousedown="execCmd('bold', event)"><b>B</b></button>
                 <button type="button" id="btn-italic" onmousedown="execCmd('italic', event)"><i>I</i></button>
                 <button type="button" id="btn-underline" onmousedown="execCmd('underline', event)"><u>U</u></button>

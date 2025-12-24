@@ -7,7 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Paleta de Colores Teológicos Mejorada */
         :root {
+            --dark-header: #1e293b;
+            --accent-blue: #3b82f6;
             --A: #e6194B; --B: #3cb44b; --C: #d48a00; --D: #4363d8; --E: #f58231;
             --F: #911eb4; --G: #00a3cc; --H: #f032e6; --I: #808000; --J: #a11d33;
             --K: #469990; --L: #6a329f; --M: #9a6324; --N: #000075; --O: #800000;
@@ -15,13 +18,21 @@
             --U: #e6194b; --V: #008080; --W: #6f42c1; --X: #886a00; --Y: #005a70; --Z: #004d00;
         }
 
-        .header-glosario { background: #1a1d20; color: white; padding: 20px 0; border-bottom: 5px solid var(--D); }
-        .btn-accion { border-radius: 12px; font-weight: bold; transition: 0.3s; border: none; padding: 10px 20px; }
-        .btn-copiar { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; }
-        .btn-limpiar { background: #dc3545; color: white; }
+        body { background-color: #f8fafc !important; font-family: 'Times New Roman', serif; }
 
-        /* Estilos dinámicos para los títulos en la app */
-        [class^="letra-"] { border-left: 10px solid; font-weight: bold; }
+        .header-glosario { 
+            background: var(--dark-header); 
+            color: white; 
+            padding: 15px 0; 
+            border-bottom: 3px solid var(--accent-blue); 
+        }
+
+        .btn-accion { border-radius: 8px; font-weight: bold; transition: 0.3s; border: none; }
+        .btn-copiar { background: var(--accent-blue); color: white; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); }
+        .btn-limpiar { background: #ef4444; color: white; }
+
+        /* Estilos de Letras */
+        [class^="letra-"] { border-left: 8px solid; font-weight: bold; transition: 0.2s; }
         .letra-A { border-color: var(--A); color: var(--A); } .letra-B { border-color: var(--B); color: var(--B); }
         .letra-C { border-color: var(--C); color: var(--C); } .letra-D { border-color: var(--D); color: var(--D); }
         .letra-E { border-color: var(--E); color: var(--E); } .letra-F { border-color: var(--F); color: var(--F); }
@@ -36,45 +47,52 @@
         .letra-W { border-color: var(--W); color: var(--W); } .letra-X { border-color: var(--X); color: var(--X); }
         .letra-Y { border-color: var(--Y); color: var(--Y); } .letra-Z { border-color: var(--Z); color: var(--Z); }
 
-        .accordion-button { font-size: 1.3rem !important; background: white !important; }
-        .cat-badge { font-size: 0.7rem; background: #eee; color: #555; padding: 4px 10px; border-radius: 20px; margin-left: auto; }
+        .accordion-button:not(.collapsed) { background-color: #f1f5f9 !important; }
+        .accordion-button { font-size: 1.15rem !important; }
+        .cat-badge { font-size: 0.7rem; background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; margin-left: auto; text-transform: uppercase; font-weight: 800; }
         
         .btn-flotante {
-            position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px;
-            border-radius: 50%; background: #ffc107; border: none; font-size: 24px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1000;
+            position: fixed; bottom: 25px; right: 25px; width: 55px; height: 55px;
+            border-radius: 50%; background: #fbbf24; border: none; font-size: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25); z-index: 1000; transition: 0.3s;
         }
+        .btn-flotante:active { transform: scale(0.9); }
 
         @media (min-width: 768px) {
-            .btn-flotante { width: auto; height: auto; border-radius: 50px; padding: 15px 30px; font-size: 1rem; }
-            .btn-flotante::after { content: " AÑADIR PALABRA"; font-weight: bold; margin-left: 5px; }
+            .btn-flotante { width: auto; height: auto; border-radius: 12px; padding: 12px 25px; font-size: 0.95rem; }
+            .btn-flotante::after { content: " AÑADIR TÉRMINO"; font-weight: bold; margin-left: 8px; }
         }
+
+        .busqueda-container { position: sticky; top: 0; z-index: 900; background: #f8fafc; padding-bottom: 10px; }
     </style>
 </head>
 <body class="bg-light">
 
-<header class="header-glosario no-print shadow">
+<header class="header-glosario no-print shadow-sm">
     <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
-            <h1 class="h3 mb-0">📖 Glosario del Mensaje</h1>
-            <small class="opacity-75">Términos Clave para Predicación</small>
+            <h1 class="h4 mb-0 fw-bold">📖 Glosario Teológico</h1>
+            <small class="opacity-75">Conceptos y Etimologías</small>
         </div>
         <div class="d-flex gap-2">
-            <a href="index.html" class="btn btn-accion btn-secondary btn-sm">🔙 Volver</a>
-            <button class="btn btn-accion btn-copiar btn-sm" onclick="copiarPalabras()">📋 Copiar Todo a Color</button>
-            <button class="btn btn-accion btn-limpiar btn-sm" onclick="limpiarTodo()">🗑️</button>
+            <a href="index.html" class="btn btn-accion btn-outline-light btn-sm">🔙 Inicio</a>
+            <button class="btn btn-accion btn-copiar btn-sm shadow-sm" onclick="copiarPalabras()">📋 Copiar Todo</button>
+            <button class="btn btn-accion btn-limpiar btn-sm shadow-sm" onclick="limpiarTodo()">🗑️</button>
         </div>
     </div>
 </header>
 
-<div class="container-fluid px-4 mt-4">
-    <input type="text" id="busqueda" class="form-control form-control-lg shadow-sm mb-4" placeholder="🔍 Buscar término..." onkeyup="filtrar()">
+<div class="container-fluid px-4 mt-3">
+    <div class="busqueda-container">
+        <input type="text" id="busqueda" class="form-control form-control-lg border-0 shadow-sm" 
+               style="border-radius: 12px;" placeholder="🔍 Buscar término bíblico..." onkeyup="filtrar()">
+    </div>
     
-    <div class="accordion shadow-sm" id="contenedorGlosario"></div>
+    <div class="accordion mt-3" id="contenedorGlosario"></div>
     
-    <div id="vacio" class="text-center p-5 mt-4 bg-white rounded shadow" style="display:none;">
-        <h4 class="text-muted">Glosario vacío.</h4>
-        <p>Añade términos en Hebreo o Griego.</p>
+    <div id="vacio" class="text-center p-5 mt-4 bg-white rounded shadow-sm border" style="display:none;">
+        <h4 class="text-muted fw-bold">Sin términos registrados</h4>
+        <p class="mb-0">Comienza añadiendo palabras clave en Griego o Hebreo.</p>
     </div>
 </div>
 
@@ -90,24 +108,29 @@
         c.innerHTML = "";
         if (datos.length === 0) { v.style.display = "block"; return; }
         v.style.display = "none";
+        
+        // Ordenar alfabéticamente
         datos.sort((a,b) => a.palabra.localeCompare(b.palabra));
 
         datos.forEach((item, i) => {
             const letra = item.palabra.charAt(0).toUpperCase();
             const id = `c${i}`;
+            const color = getComputedStyle(document.documentElement).getPropertyValue(`--${letra}`).trim() || "#333";
+            
             c.innerHTML += `
                 <div class="accordion-item border-0 mb-3 shadow-sm rounded overflow-hidden">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed letra-${letra}" type="button" data-bs-toggle="collapse" data-bs-target="#${id}">
-                            ${item.palabra} <span class="cat-badge">${item.cat}</span>
+                            <span style="color:${color}">${item.palabra}</span> 
+                            <span class="cat-badge">${item.cat}</span>
                         </button>
                     </h2>
                     <div id="${id}" class="accordion-collapse collapse">
-                        <div class="accordion-body bg-white">
-                            <p class="fs-5 mb-3">${item.definicion}</p>
-                            <div class="d-flex gap-2 no-print border-top pt-2">
-                                <button class="btn btn-sm btn-link text-primary" onclick="editar(${i})">Editar</button>
-                                <button class="btn btn-sm btn-link text-danger" onclick="borrar(${i})">Borrar</button>
+                        <div class="accordion-body bg-white border-top">
+                            <p class="fs-5 mb-3 text-dark" style="line-height:1.6">${item.definicion}</p>
+                            <div class="d-flex justify-content-end gap-3 no-print border-top pt-2">
+                                <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold" onclick="editar(${i})">✏️ EDITAR</button>
+                                <button class="btn btn-sm btn-link text-danger text-decoration-none fw-bold" onclick="borrar(${i})">🗑️ BORRAR</button>
                             </div>
                         </div>
                     </div>
@@ -115,7 +138,6 @@
         });
     }
 
-    // --- FUNCIÓN QUE COPIA SOLO LAS PALABRAS Y COLORES ---
     function copiarPalabras() {
         if (datos.length === 0) return alert("Glosario vacío");
 
@@ -124,24 +146,22 @@
         tempDiv.style.left = "-9999px";
         document.body.appendChild(tempDiv);
 
-        let htmlFinal = `<div style="font-family: Arial, sans-serif;">`;
+        let htmlFinal = `<div style="font-family: 'Times New Roman', serif; padding: 10px;">`;
         datos.forEach(item => {
             const letra = item.palabra.charAt(0).toUpperCase();
-            const color = getComputedStyle(document.documentElement).getPropertyValue(`--${letra}`).trim() || "#333";
+            const color = getComputedStyle(document.documentElement).getPropertyValue(`--${letra}`).trim() || "#1e293b";
             
-            // Estructura limpia para el Bosquejo
             htmlFinal += `
-                <div style="margin-bottom: 18px; border-left: 8px solid ${color}; padding: 2px 0 2px 15px;">
-                    <strong style="color: ${color}; font-size: 18pt; text-transform: uppercase; display: block;">${item.palabra}</strong>
-                    <span style="font-size: 10pt; color: #888; text-transform: uppercase; letter-spacing: 1px;">[${item.cat}]</span>
-                    <div style="font-size: 13pt; color: #333; margin-top: 6px; line-height: 1.4;">${item.definicion}</div>
+                <div style="margin-bottom: 20px; border-left: 5px solid ${color}; padding-left: 15px;">
+                    <strong style="color: ${color}; font-size: 16pt; text-transform: uppercase;">${item.palabra}</strong>
+                    <i style="font-size: 10pt; color: #64748b; margin-left: 10px;">(${item.cat})</i>
+                    <div style="font-size: 13pt; color: #1e293b; margin-top: 5px;">${item.definicion}</div>
                 </div>`;
         });
         htmlFinal += `</div>`;
 
         tempDiv.innerHTML = htmlFinal;
 
-        // Selección y copiado
         const range = document.createRange();
         range.selectNode(tempDiv);
         window.getSelection().removeAllRanges();
@@ -149,7 +169,7 @@
 
         try {
             document.execCommand('copy');
-            alert("✅ Palabras copiadas. Pégalas en tu bosquejo final.");
+            alert("✅ Glosario copiado con formato. Ya puedes pegarlo en tu bosquejo.");
         } catch (err) {
             alert("Error al copiar.");
         }
@@ -159,9 +179,9 @@
     }
 
     function nuevo() {
-        const p = prompt("Palabra:"); if(!p) return;
-        const d = prompt("Definición:"); if(!d) return;
-        const c = prompt("Categoría:") || "General";
+        const p = prompt("Término / Palabra:"); if(!p) return;
+        const d = prompt("Definición Teológica:"); if(!d) return;
+        const c = prompt("Categoría (Griego, Hebreo, Doctrina...):") || "General";
         datos.push({palabra: p, definicion: d, cat: c});
         guardar();
     }
@@ -173,9 +193,10 @@
         guardar();
     }
 
-    function borrar(i) { if(confirm("¿Borrar?")) { datos.splice(i,1); guardar(); } }
-    function limpiarTodo() { if(confirm("¿Borrar todo?")) { datos = []; guardar(); } }
+    function borrar(i) { if(confirm("¿Eliminar este término?")) { datos.splice(i,1); guardar(); } }
+    function limpiarTodo() { if(confirm("¿Eliminar todo el glosario?")) { datos = []; guardar(); } }
     function guardar() { localStorage.setItem('glosario_color_v1', JSON.stringify(datos)); cargar(); }
+    
     function filtrar() {
         const t = document.getElementById('busqueda').value.toLowerCase();
         document.querySelectorAll('.accordion-item').forEach(it => {

@@ -7,6 +7,7 @@ body {
     padding: 0; 
     font-family: 'Times New Roman', Times, serif; 
     color: #1e293b;
+    overflow-x: hidden;
 }
 
 /* =========================================
@@ -20,7 +21,6 @@ body {
     align-items: center; 
     z-index: 9999;
     touch-action: none;
-    /* Evita que la barra se mueva fuera de la pantalla */
     max-width: 95vw;
 }
 
@@ -38,6 +38,7 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     z-index: 10;
     border: 2px solid white;
+    user-select: none;
 }
 
 /* Pestañas de activación laterales */
@@ -54,11 +55,10 @@ body {
     border-radius: 50%; 
     border: 1px solid #475569;
     z-index: 5;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
 }
 
-.side-tab:hover { background: #334155; }
-
+.side-tab:hover { background: #334155; transform: scale(1.1); }
 .left-tab { margin-right: -15px; }
 .right-tab { margin-left: -15px; }
 
@@ -78,7 +78,7 @@ body {
 #left-ribbon {
     border-radius: 25px 0 0 25px;
     margin-right: -30px; 
-    padding-right: 40px; /* Espacio extra para que no se oculte tras el martillo */
+    padding-right: 40px; 
 }
 
 #right-ribbon {
@@ -92,12 +92,10 @@ body {
     align-items: center; 
     gap: 12px; 
     overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
-.scroll-container::-webkit-scrollbar { 
-    display: none; /* Chrome/Safari */
-}
+.scroll-container::-webkit-scrollbar { display: none; }
 
 /* =========================================
    BOTONES Y HERRAMIENTAS
@@ -112,7 +110,10 @@ button, select {
     font-weight: bold;
     color: #334155;
     flex-shrink: 0;
+    transition: background 0.2s;
 }
+
+button:hover { background: #e2e8f0; }
 
 .divider {
     width: 1px;
@@ -123,41 +124,55 @@ button, select {
 }
 
 .color-picker-container {
-    width: 30px; 
-    height: 30px;
+    width: 32px; 
+    height: 32px;
     border-radius: 50%;
     border: 2px solid white;
     overflow: hidden;
     background: white;
     flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 input[type="color"] {
     width: 50px; 
     height: 50px;
-    transform: translate(-10px, -10px);
+    transform: scale(2);
     cursor: pointer;
+    border: none;
 }
 
 /* =========================================
-   PAPEL Y TEXTO
+   PAPEL Y TEXTO (Efecto Studio)
    ========================================= */
+#document-area {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+}
+
 #paper {
+    position: relative;
     width: 100%; 
     max-width: 210mm; 
     min-height: 297mm; 
     background: white;
     padding: 25mm; 
-    margin: 120px auto 40px auto;
-    box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    margin: 100px auto 40px auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     box-sizing: border-box;
     transition: all 0.3s ease;
+    counter-reset: page; /* Inicializa el contador de páginas para el PDF */
 }
 
 .section-block { 
     margin-top: 25px; 
-    border-top: 2px solid #e2e8f0; 
-    padding-top: 10px;
+    border-top: 2px solid #f1f5f9; 
+    padding-top: 15px;
+    position: relative;
 }
 
 .label { 
@@ -165,14 +180,105 @@ input[type="color"] {
     color: #3b82f6; 
     font-weight: 800; 
     text-transform: uppercase;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
 }
 
-.editable { outline: none; font-size: 19px; line-height: 1.6; }
+.editable { outline: none; font-size: 19px; line-height: 1.6; min-height: 1.6em; }
 
 [contenteditable="true"]:empty:before { 
     content: attr(data-placeholder); 
     color: #cbd5e0; 
+    font-style: italic;
+}
+
+/* Subpuntos Especiales */
+.sub-point-container {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 15px;
+    margin-bottom: 10px;
+}
+
+/* =========================================
+   MARCA DE AGUA Y LOGO (Sin bordes)
+   ========================================= */
+#watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+    width: 70%;
+    max-width: 450px;
+}
+
+#watermark img {
+    width: 100%;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* FOOTER DEL SERMÓN */
+#sermon-footer {
+    margin-top: 80px;
+    padding-top: 20px;
+    border-top: 1.5px solid #e2e8f0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.footer-content .verse {
+    font-style: italic;
+    font-size: 1.1rem;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+.footer-content .reference {
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.mini-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    border: none !important;
+}
+
+.brand {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* =========================================
+   SISTEMA DE PAGINACIÓN PDF (Contador)
+   ========================================= */
+@media print {
+    body { background: white; }
+    #paper { margin: 0; box-shadow: none; border: none; }
+    #floating-toolbar, .side-tab, .no-print { display: none !important; }
+
+    /* Estilo para el número de página en la base de cada hoja */
+    #paper::after {
+        counter-increment: page;
+        content: "Página " counter(page);
+        position: fixed;
+        bottom: 10mm;
+        right: 10mm;
+        font-size: 10pt;
+        color: #94a3b8;
+    }
+    
+    #watermark { opacity: 0.04; }
 }
 
 /* =========================================
@@ -186,40 +292,25 @@ input[type="color"] {
     margin: 0 !important;
 }
 
+.active-tool {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
 .btn-success { background: #10b981 !important; color: white !important; }
 .btn-danger { background: #ef4444 !important; color: white !important; }
 
-@media (max-width: 768px) {
-    #paper { padding: 15mm; width: 95%; margin-top: 130px; }
-    
-    /* En móvil las alas ocupan más espacio pero respetan el scroll */
-    .ribbon { 
-        max-width: 60vw; 
-    }
-    
-    #hammer-icon {
-        width: 55px;
-        height: 55px;
-    }
-    
-    button {
-        padding: 10px 15px;
-        font-size: 14px;
-    }
+.purpose-select {
+    border: 1.5px solid #9b59b6;
+    color: #9b59b6;
+    background: white;
+    min-width: 150px;
 }
 
-.active-tool {
-    background: #3b82f6 !important; /* Color azul para indicar que está activo */
-    color: white !important;
-}
-.purpose-select {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #9b59b6;
-    background: #f8fafc;
-    font-size: 12px;
-    font-weight: bold;
-    color: #9b59b6;
-    cursor: pointer;
-    min-width: 140px;
+@media (max-width: 768px) {
+    #paper { padding: 10mm; width: 98%; margin-top: 110px; }
+    .ribbon { max-width: 55vw; }
+    #hammer-icon { width: 55px; height: 55px; font-size: 24px; }
+    button { padding: 10px 12px; font-size: 14px; }
+    .editable { font-size: 18px; }
 }

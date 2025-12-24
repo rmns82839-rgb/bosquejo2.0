@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,9 +18,9 @@
     </style>
 </head>
 <body>
-
     <div id="floating-toolbar">
         <div class="side-tab left-tab" onclick="toggleRibbon('left')">🖋️</div>
+        
         <div id="left-ribbon" class="ribbon hidden">
             <div class="scroll-container">
                 <button type="button" id="btn-bold" onmousedown="execCmd('bold', event)"><b>B</b></button>
@@ -34,12 +35,19 @@
 
                 <div class="divider"></div>
 
-                <select onchange="if(this.value) window.open(this.value, '_blank'); this.value='';" class="study-select">
+                <select onchange="if(this.value) { 
+                    if(this.value.includes('http')) { 
+                        window.open(this.value, '_blank'); 
+                    } else { 
+                        window.location.href = this.value; 
+                    }
+                    this.value='';
+                }" class="study-select">
                     <option value="">📚 Estudio</option>
                     <option value="notas.html">📝 Mis Notas</option>
                     <option value="glosario.html">📖 Glosario Técnico</option>
-                    <option value="versiculos.html">📑 Versículos Clave</option>
-                    <option value="https://biblehub.com/interlinear/">Interlineal</option>
+                    <option value="versículos.html">📑 Versículos Clave</option>
+                    <option value="https://diccionariobiblico.net/">📖 Diccionario Bíblico</option>
                     <option value="https://www.blueletterbible.org/">Blue Letter</option>
                     <option value="https://www.biblegateway.com/">Bible Gateway</option>
                 </select>
@@ -75,6 +83,7 @@
                 <button onclick="clearData()" class="btn-danger">🗑️</button>
             </div>
         </div>
+
         <div class="side-tab right-tab" onclick="toggleRibbon('right')">📋</div>
     </div>
 
@@ -90,9 +99,7 @@
 
             <footer id="sermon-footer">
                 <div class="footer-content">
-                    <p class="verse">"Lámpara es a mis pies tu palabra,
-
-Y lumbrera a mi camino."</p>
+                    <p class="verse">"Tu palabra es una lámpara a mis pies y una luz en mi camino."</p>
                     <p class="reference">Salmo 119:105</p>
                     <div class="brand">
                         <img src="logo.png" alt="Logo" class="mini-logo">

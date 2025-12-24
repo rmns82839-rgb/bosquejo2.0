@@ -11,7 +11,7 @@ const leftRibbon = document.getElementById("left-ribbon");
 const rightRibbon = document.getElementById("right-ribbon");
 
 /* =========================================
-   SISTEMA DE ARRASTRE
+   SISTEMA DE ARRASTRE (Optimizado para Móvil)
    ========================================= */
 function makeDraggable(el, handle) {
     let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
@@ -40,10 +40,10 @@ function makeDraggable(el, handle) {
         document.onmousemove = null; document.ontouchmove = null;
     }
 }
-makeDraggable(toolbar, hammer);
+if(toolbar && hammer) makeDraggable(toolbar, hammer);
 
 /* =========================================
-   GESTIÓN DE SELECCIÓN (EL SECRETO DEL COLOR)
+   GESTIÓN DE SELECCIÓN (El Secreto del Color)
    ========================================= */
 function saveSelection() {
     const sel = window.getSelection();
@@ -60,41 +60,34 @@ function restoreSelection() {
     }
 }
 
-// Escuchar cambios de selección
 document.addEventListener("selectionchange", () => {
-    // Solo guardamos si el foco está en un área editable
-    if (document.activeElement.isContentEditable) {
+    if (document.activeElement && document.activeElement.isContentEditable) {
         saveSelection();
     }
     updateButtonStates();
 });
 
 /* =========================================
-   FORMATO DE TEXTO Y COLOR MEJORADO
+   FORMATO DE TEXTO Y COLOR
    ========================================= */
 function execCmd(command, event, value = null) {
-    // Si el comando es color y viene de un evento de cambio
-    if (command === 'foreColor') {
-        const colorPicker = document.getElementById('fontColor');
-        value = value || (colorPicker ? colorPicker.value : "#000000");
-    }
-
-    // Evitar que el clic en el botón robe el foco permanentemente
     if (event && event.preventDefault && command !== 'foreColor') {
         event.preventDefault();
     }
     
-    // Forzar restauración del resaltado
     restoreSelection();
 
-    // Ejecutar comando
+    if (command === 'foreColor') {
+        // Si no se pasa valor, lo toma del input
+        const colorPicker = document.getElementById('fontColor');
+        value = value || (colorPicker ? colorPicker.value : "#000000");
+    }
+
     document.execCommand(command, false, value);
-    
     updateButtonStates();
     saveData();
 }
 
-// Función para actualizar estados de botones (Negrita, Cursiva, etc)
 function updateButtonStates() {
     const commands = ['bold', 'italic', 'underline'];
     commands.forEach(cmd => {
@@ -102,8 +95,10 @@ function updateButtonStates() {
         if (btn) {
             if (document.queryCommandState(cmd)) {
                 btn.classList.add('active-tool');
+                btn.style.backgroundColor = "#e2e8f0"; // Feedback visual
             } else {
                 btn.classList.remove('active-tool');
+                btn.style.backgroundColor = "";
             }
         }
     });
@@ -146,12 +141,39 @@ function addSection(label, color) {
     div.style.borderTop = `3px solid ${color}`;
     
     div.innerHTML = `
-        <div class="label" style="color: ${color}">${label}</div>
+        <div class="label" style="color: ${color}; font-weight:bold; margin-bottom:5px;">${label}</div>
         <div class="editable" contenteditable="true" data-placeholder="Escriba aquí..." oninput="saveData()"></div>
     `;
     
     container.appendChild(div);
-    if (label !== 'Subpunto') subPointCount = 0;
+    saveData();
+    setTimeout(() => div.querySelector('.editable').focus(), 10);
+}
+
+function addPurpose(type) {
+    if (!type) return;
+    const descriptions = {
+        "Evangelístico": "Presentar a Cristo como Salvador y persuadir a los perdidos a aceptarlo.",
+        "Aliento (Consuelo)": "Fortalecer la fe del creyente en pruebas, recordando la presencia de Dios.",
+        "Doctrinal (Didáctico)": "Enseñar verdades bíblicas, su significado y aplicación práctica.",
+        "Devocional": "Intensificar el amor y la adoración hacia Dios y la reverencia.",
+        "Consagración": "Motivar a dedicar talentos, tiempo e influencia al servicio de Dios.",
+        "Ético-Moral": "Ayudar a normar la conducta diaria y relaciones sociales según principios."
+    };
+
+    const container = document.getElementById('sections-container');
+    const div = document.createElement('div');
+    div.className = 'section-block';
+    div.style.borderTop = `3px solid #9b59b6`;
+    
+    div.innerHTML = `
+        <div class="label" style="color: #9b59b6; font-weight:bold;">Propósito: ${type}</div>
+        <div class="editable" contenteditable="true" oninput="saveData()">
+            <i>${descriptions[type]}</i><br>
+        </div>
+    `;
+    
+    container.appendChild(div);
     saveData();
     setTimeout(() => div.querySelector('.editable').focus(), 10);
 }
@@ -170,7 +192,7 @@ function addSubPoint() {
     div.style.marginLeft = "30px";
     div.style.marginTop = "10px";
     
-    const letter = String.fromCharCode(64 + subPointCount);
+    const letter = String.fromCharCode(64 + subPointCount); // A, B, C...
     div.innerHTML = `
         <span style="font-weight:bold; color:#64748b;">${letter}. </span>
         <span class="editable" contenteditable="true" data-placeholder="Desarrolle el subpunto..." oninput="saveData()" style="display:inline-block; width:85%; border-bottom: 1px dashed #e2e8f0;"></span>
@@ -185,69 +207,61 @@ function addSubPoint() {
    LOCAL STORAGE Y PDF
    ========================================= */
 function saveData() {
-    const paper = document.getElementById('paper');
-    if (!paper) return;
+    const title = document.getElementById('main-title');
+    const container = document.getElementById('sections-container');
+    if (!title || !container) return;
 
     const data = {
-        title: document.getElementById('main-title').innerHTML,
-        content: document.getElementById('sections-container').innerHTML,
+        title: title.innerHTML,
+        content: container.innerHTML,
         mCount: mainPointCount,
         sCount: subPointCount
     };
-    localStorage.setItem('bosquejo_data', JSON.stringify(data));
+    localStorage.setItem('bosquejo_data_v2', JSON.stringify(data));
 }
 
 window.onload = () => {
-    const saved = localStorage.getItem('bosquejo_data');
+    const saved = localStorage.getItem('bosquejo_data_v2');
     if (saved) {
         const data = JSON.parse(saved);
-        document.getElementById('main-title').innerHTML = data.title;
-        document.getElementById('sections-container').innerHTML = data.content;
+        document.getElementById('main-title').innerHTML = data.title || "";
+        document.getElementById('sections-container').innerHTML = data.content || "";
         mainPointCount = data.mCount || 0;
         subPointCount = data.sCount || 0;
     }
 };
 
 function clearData() {
-    if (confirm("¿Borrar todo el progreso?")) {
-        localStorage.removeItem('bosquejo_data');
+    if (confirm("¿Borrar todo el progreso del sermón?")) {
+        localStorage.removeItem('bosquejo_data_v2');
         location.reload();
     }
 }
 
 function generatePDF() {
+    // Capturamos el papel que contiene el contenido, logo y footer
     const element = document.getElementById('paper');
+    
+    // Ocultar cintas para el PDF
     leftRibbon.classList.add('hidden');
     rightRibbon.classList.add('hidden');
-    html2pdf().from(element).save('Mi_Bosquejo.pdf');
-}
 
-function addPurpose(type) {
-    if (!type) return;
-
-    // Diccionario de definiciones según tu lista
-    const descriptions = {
-        "Evangelístico": "Presentar a Cristo como Salvador y persuadir a los perdidos a aceptarlo.",
-        "Aliento (Consuelo)": "Fortalecer la fe del creyente en pruebas, recordando la presencia de Dios.",
-        "Doctrinal (Didáctico)": "Enseñar verdades bíblicas, su significado y aplicación práctica.",
-        "Devocional": "Intensificar el amor y la adoración hacia Dios y la reverencia.",
-        "Consagración": "Motivar a dedicar talentos, tiempo e influencia al servicio de Dios.",
-        "Ético-Moral": "Ayudar a normar la conducta diaria y relaciones sociales según principios."
+    const opt = {
+        margin:       [10, 10, 15, 10], // Arriba, Izq, Abajo, Der
+        filename:     'Sermon_Studio_Edition.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
-    const container = document.getElementById('sections-container');
-    const div = document.createElement('div');
-    div.className = 'section-block';
-    div.style.borderTop = `3px solid #9b59b6`; // Color morado para propósitos
     
-    div.innerHTML = `
-        <div class="label" style="color: #9b59b6">Propósito: ${type}</div>
-        <div class="editable" contenteditable="true" oninput="saveData()">
-            <i>${descriptions[type]}</i><br>
-        </div>
-    `;
-    
-    container.appendChild(div);
-    saveData();
-    setTimeout(() => div.querySelector('.editable').focus(), 10);
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Opcional: mostrar herramientas de nuevo después de guardar
+        console.log("PDF Generado");
+    });
 }

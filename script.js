@@ -11,16 +11,24 @@ const leftRibbon = document.getElementById("left-ribbon");
 const rightRibbon = document.getElementById("right-ribbon");
 
 /* =========================================
-   SISTEMA DE ARRASTRE (Optimizado para Móvil)
+   SISTEMA DE ARRASTRE CON EFECTO IMÁN
    ========================================= */
-function makeDraggable(el, handle) {
+function makeDraggable(el) {
     let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
-    handle.onmousedown = dragStart;
-    handle.ontouchstart = dragStart;
+    const handles = el.querySelectorAll('#hammer-icon, .side-tab');
+
+    handles.forEach(handle => {
+        handle.onmousedown = dragStart;
+        handle.ontouchstart = dragStart;
+    });
 
     function dragStart(e) {
+        el.style.transition = "none"; // Quitamos transición durante el arrastre
+        el.classList.remove("toolbar-docked"); // Quitamos transparencia al mover
+        
         p3 = e.clientX || (e.touches ? e.touches[0].clientX : 0);
         p4 = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+        
         document.onmouseup = stopDrag;
         document.ontouchend = stopDrag;
         document.onmousemove = move;
@@ -30,26 +38,56 @@ function makeDraggable(el, handle) {
     function move(e) {
         let cx = e.clientX || (e.touches ? e.touches[0].clientX : 0);
         let cy = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-        p1 = p3 - cx; p2 = p4 - cy; p3 = cx; p4 = cy;
+        
+        p1 = p3 - cx; 
+        p2 = p4 - cy; 
+        p3 = cx; 
+        p4 = cy;
+        
         el.style.top = (el.offsetTop - p2) + "px";
         el.style.left = (el.offsetLeft - p1) + "px";
     }
 
     function stopDrag() {
-        document.onmouseup = null; document.ontouchend = null;
-        document.onmousemove = null; document.ontouchmove = null;
+        document.onmouseup = null; 
+        document.ontouchend = null;
+        document.onmousemove = null; 
+        document.ontouchmove = null;
+
+        applyMagneticEffect(el);
     }
 }
-if(toolbar && hammer) makeDraggable(toolbar, hammer);
+
+function applyMagneticEffect(el) {
+    el.style.transition = "all 0.3s ease"; // Suavizamos el golpe del imán
+    const gap = 20; // Distancia para que se active el imán
+    const rect = el.getBoundingClientRect();
+    
+    // Imán horizontal
+    if (rect.left < gap) {
+        el.style.left = "0px";
+        el.classList.add("toolbar-docked");
+    } else if (window.innerWidth - rect.right < gap) {
+        el.style.left = (window.innerWidth - rect.width) + "px";
+        el.classList.add("toolbar-docked");
+    }
+
+    // Imán vertical
+    if (rect.top < gap) {
+        el.style.top = "0px";
+    } else if (window.innerHeight - rect.bottom < gap) {
+        el.style.top = (window.innerHeight - rect.height) + "px";
+    }
+}
+
+if(toolbar) makeDraggable(toolbar);
 
 /* =========================================
-   GESTIÓN DE SELECCIÓN (El Secreto del Color)
+   GESTIÓN DE SELECCIÓN
    ========================================= */
 function saveSelection() {
     const sel = window.getSelection();
-    if (sel.rangeCount > 0) {
-        savedSelection = sel.getRangeAt(0);
-    }
+    if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0);
 }
 
 function restoreSelection() {
@@ -61,9 +99,7 @@ function restoreSelection() {
 }
 
 document.addEventListener("selectionchange", () => {
-    if (document.activeElement && document.activeElement.isContentEditable) {
-        saveSelection();
-    }
+    if (document.activeElement && document.activeElement.isContentEditable) saveSelection();
     updateButtonStates();
 });
 
@@ -71,21 +107,16 @@ document.addEventListener("selectionchange", () => {
    FORMATO DE TEXTO Y COLOR
    ========================================= */
 function execCmd(command, event, value = null) {
-    if (event && event.preventDefault && command !== 'foreColor') {
-        event.preventDefault();
-    }
-    
+    if (event && event.preventDefault && command !== 'foreColor') event.preventDefault();
     restoreSelection();
-
     if (command === 'foreColor') {
-        // Si no se pasa valor, lo toma del input
         const colorPicker = document.getElementById('fontColor');
         value = value || (colorPicker ? colorPicker.value : "#000000");
     }
-
     document.execCommand(command, false, value);
     updateButtonStates();
     saveData();
+    saveHistory(); 
 }
 
 function updateButtonStates() {
@@ -93,13 +124,7 @@ function updateButtonStates() {
     commands.forEach(cmd => {
         const btn = document.getElementById('btn-' + cmd);
         if (btn) {
-            if (document.queryCommandState(cmd)) {
-                btn.classList.add('active-tool');
-                btn.style.backgroundColor = "#e2e8f0"; // Feedback visual
-            } else {
-                btn.classList.remove('active-tool');
-                btn.style.backgroundColor = "";
-            }
+            btn.style.backgroundColor = document.queryCommandState(cmd) ? "#e2e8f0" : "";
         }
     });
 }
@@ -108,6 +133,7 @@ function updateButtonStates() {
    DESPLIEGUE DE ALAS EXCLUSIVO
    ========================================= */
 function toggleRibbon(side) {
+    toolbar.classList.remove("toolbar-docked"); // Se ilumina al interactuar
     if (side === 'left') {
         leftRibbon.classList.toggle('hidden');
         rightRibbon.classList.add('hidden');
@@ -118,6 +144,7 @@ function toggleRibbon(side) {
 }
 
 hammer.addEventListener('click', () => {
+    toolbar.classList.remove("toolbar-docked");
     if (leftRibbon.classList.contains('hidden') && rightRibbon.classList.contains('hidden')) {
         leftRibbon.classList.remove('hidden');
     } else {
@@ -139,14 +166,13 @@ function addSection(label, color) {
     const div = document.createElement('div');
     div.className = 'section-block';
     div.style.borderTop = `3px solid ${color}`;
-    
     div.innerHTML = `
         <div class="label" style="color: ${color}; font-weight:bold; margin-bottom:5px;">${label}</div>
         <div class="editable" contenteditable="true" data-placeholder="Escriba aquí..." oninput="saveData()"></div>
     `;
-    
     container.appendChild(div);
     saveData();
+    saveHistory(); 
     setTimeout(() => div.querySelector('.editable').focus(), 10);
 }
 
@@ -160,21 +186,17 @@ function addPurpose(type) {
         "Consagración": "Motivar a dedicar talentos, tiempo e influencia al servicio de Dios.",
         "Ético-Moral": "Ayudar a normar la conducta diaria y relaciones sociales según principios."
     };
-
     const container = document.getElementById('sections-container');
     const div = document.createElement('div');
     div.className = 'section-block';
     div.style.borderTop = `3px solid #9b59b6`;
-    
     div.innerHTML = `
         <div class="label" style="color: #9b59b6; font-weight:bold;">Propósito: ${type}</div>
-        <div class="editable" contenteditable="true" oninput="saveData()">
-            <i>${descriptions[type]}</i><br>
-        </div>
+        <div class="editable" contenteditable="true" oninput="saveData()"><i>${descriptions[type]}</i><br></div>
     `;
-    
     container.appendChild(div);
     saveData();
+    saveHistory();
     setTimeout(() => div.querySelector('.editable').focus(), 10);
 }
 
@@ -191,15 +213,14 @@ function addSubPoint() {
     div.className = 'sub-point-container';
     div.style.marginLeft = "30px";
     div.style.marginTop = "10px";
-    
-    const letter = String.fromCharCode(64 + subPointCount); // A, B, C...
+    const letter = String.fromCharCode(64 + subPointCount); 
     div.innerHTML = `
         <span style="font-weight:bold; color:#64748b;">${letter}. </span>
-        <span class="editable" contenteditable="true" data-placeholder="Desarrolle el subpunto..." oninput="saveData()" style="display:inline-block; width:85%; border-bottom: 1px dashed #e2e8f0;"></span>
+        <span class="editable" contenteditable="true" data-placeholder="Subpunto..." oninput="saveData()" style="display:inline-block; width:85%; border-bottom: 1px dashed #e2e8f0;"></span>
     `;
-    
     container.appendChild(div);
     saveData();
+    saveHistory();
     setTimeout(() => div.querySelector('.editable').focus(), 10);
 }
 
@@ -210,7 +231,6 @@ function saveData() {
     const title = document.getElementById('main-title');
     const container = document.getElementById('sections-container');
     if (!title || !container) return;
-
     const data = {
         title: title.innerHTML,
         content: container.innerHTML,
@@ -229,39 +249,74 @@ window.onload = () => {
         mainPointCount = data.mCount || 0;
         subPointCount = data.sCount || 0;
     }
+    initHistorySystem();
 };
 
 function clearData() {
-    if (confirm("¿Borrar todo el progreso del sermón?")) {
+    if (confirm("¿Borrar todo el progreso?")) {
         localStorage.removeItem('bosquejo_data_v2');
         location.reload();
     }
 }
 
 function generatePDF() {
-    // Capturamos el papel que contiene el contenido, logo y footer
     const element = document.getElementById('paper');
-    
-    // Ocultar cintas para el PDF
-    leftRibbon.classList.add('hidden');
-    rightRibbon.classList.add('hidden');
-
     const opt = {
-        margin:       [10, 10, 15, 10], // Arriba, Izq, Abajo, Der
-        filename:     'Sermon_Studio_Edition.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            letterRendering: true,
-            scrollX: 0,
-            scrollY: 0
-        },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: [10, 10, 15, 10],
+        filename: 'Sermon_Studio.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Opcional: mostrar herramientas de nuevo después de guardar
-        console.log("PDF Generado");
-    });
+    html2pdf().set(opt).from(element).save();
+}
+
+/* =========================================
+   SISTEMA DE HISTORIAL (UNDO/REDO)
+   ========================================= */
+let undoStack = [];
+let redoStack = [];
+let isRestoring = false;
+
+function saveHistory() {
+    if (isRestoring) return;
+    const paper = document.getElementById('paper');
+    if (!paper) return;
+    const currentHTML = paper.innerHTML;
+    if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentHTML) {
+        undoStack.push(currentHTML);
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack = []; 
+    }
+}
+
+function historyUndo(e) {
+    if (e) e.preventDefault();
+    if (undoStack.length > 1) {
+        isRestoring = true;
+        redoStack.push(undoStack.pop());
+        const targetState = undoStack[undoStack.length - 1];
+        document.getElementById('paper').innerHTML = targetState;
+        saveData();
+        isRestoring = false;
+    }
+}
+
+function historyRedo(e) {
+    if (e) e.preventDefault();
+    if (redoStack.length > 0) {
+        isRestoring = true;
+        const nextState = redoStack.pop();
+        undoStack.push(nextState);
+        document.getElementById('paper').innerHTML = nextState;
+        saveData();
+        isRestoring = false;
+    }
+}
+
+function initHistorySystem() {
+    const targetNode = document.getElementById('paper');
+    if (!targetNode) return;
+    const observer = new MutationObserver(() => saveHistory());
+    observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
+    saveHistory();
 }

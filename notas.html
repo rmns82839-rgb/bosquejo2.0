@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Notas Teológicas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Ajuste específico para que el título no empuje al botón de borrar en móviles */
+        .header-nota { display: flex; align-items: center; width: 100%; gap: 10px; }
+        .input-titulo-punto { flex-grow: 1; min-width: 0; }
+        @media (max-width: 480px) {
+            .navbar-brand { font-size: 0.9rem; }
+            .btn-sm-custom { padding: 4px 8px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark mb-3 shadow-sm no-print">
+    <div class="container-fluid px-3">
+        <a href="index.html" class="navbar-brand fw-bold">🔙 Inicio</a>
+        <div class="d-flex gap-1">
+            <a href="https://www.indubiblia.org/estudio-de-la-biblia" target="_blank" class="btn btn-info btn-sm btn-sm-custom fw-bold text-white">🌐 Indubiblia</a>
+            <button class="btn btn-warning btn-sm btn-sm-custom fw-bold" onclick="agregarNota()">+ Nota</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-3">
+    <div id="contenedorNotas" class="accordion shadow-sm"></div>
+</div>
+
+<div id="controles-lectura">
+    <div id="titulo-lectura-actual">LEYENDO NOTA</div>
+    <div class="d-flex gap-2">
+        <button type="button" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(-2)">A-</button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(2)">A+</button>
+        <button type="button" class="btn-cerrar" onclick="cerrarLectura()">✕</button>
+    </div>
+</div>
+
+<script>
+let notas = JSON.parse(localStorage.getItem('mis_notas_libres')) || [];
+let fontSizeActual = 20;
+let elementoActivo = null;
+
+function cargarNotas() {
+    const contenedor = document.getElementById('contenedorNotas');
+    contenedor.innerHTML = "";
+    notas.forEach((nota, index) => {
+        const div = document.createElement('div');
+        div.className = "accordion-item border-0 border-bottom";
+        div.innerHTML = `
+            <h2 class="accordion-header bg-white">
+                <div class="header-nota p-2">
+                    <button class="btn btn-light btn-sm p-1" type="button" data-bs-toggle="collapse" data-bs-target="#n${index}">📌</button>
+                    <input type="text" class="input-titulo-punto" value="${nota.titulo}" 
+                           oninput="actualizarNota(${index}, 'titulo', this.value)" placeholder="Título...">
+                    <button class="btn btn-link text-danger p-1" onclick="borrarNota(${index})">🗑️</button>
+                </div>
+            </h2>
+            <div id="n${index}" class="accordion-collapse collapse" data-bs-parent="#contenedorNotas">
+                <div class="accordion-body p-2">
+                    <textarea class="form-control border-0 bg-light" rows="6" 
+                              oninput="actualizarNota(${index}, 'contenido', this.value)" 
+                              onfocus="setLectura(this, '${nota.titulo || 'NOTA'}')" placeholder="Escribe aquí...">${nota.contenido}</textarea>
+                </div>
+            </div>`;
+        contenedor.appendChild(div);
+    });
+}
+
+function agregarNota() {
+    notas.unshift({ titulo: "", contenido: "" });
+    guardarYRefrescar();
+}
+
+function actualizarNota(index, campo, valor) {
+    notas[index][campo] = valor;
+    localStorage.setItem('mis_notas_libres', JSON.stringify(notas));
+}
+
+function borrarNota(index) {
+    if(confirm("¿Borrar nota?")) {
+        notas.splice(index, 1);
+        guardarYRefrescar();
+    }
+}
+
+function guardarYRefrescar() {
+    localStorage.setItem('mis_notas_libres', JSON.stringify(notas));
+    cargarNotas();
+}
+
+function setLectura(el, titulo) {
+    elementoActivo = el;
+    document.getElementById('titulo-lectura-actual').innerText = titulo;
+    el.style.fontSize = fontSizeActual + "px";
+}
+
+function cambiarTamanoLetra(delta) {
+    fontSizeActual += delta;
+    if (fontSizeActual < 14) fontSizeActual = 14;
+    if (elementoActivo) elementoActivo.style.fontSize = fontSizeActual + "px";
+}
+
+function cerrarLectura() { if (elementoActivo) elementoActivo.blur(); }
+
+window.onload = cargarNotas;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

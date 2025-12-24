@@ -13,6 +13,9 @@
         body { background-color: #f1f5f9 !important; font-family: 'Times New Roman', serif; }
         .navbar { background-color: var(--dark-blue) !important; border-bottom: 2px solid var(--accent-blue); }
         
+        /* Ajuste para que el link de Inicio no abra pestaña nueva */
+        .navbar-brand { text-decoration: none; }
+
         .header-nota { 
             display: flex; align-items: center; width: 100%; gap: 10px; 
             background: white; border-radius: 8px; transition: 0.3s;
@@ -83,6 +86,9 @@ let elementoActivo = null;
 function cargarNotas() {
     const contenedor = document.getElementById('contenedorNotas');
     contenedor.innerHTML = "";
+    if (notas.length === 0) {
+        contenedor.innerHTML = "<p class='text-center text-muted mt-5'>No tienes notas aún. ¡Crea la primera!</p>";
+    }
     notas.forEach((nota, index) => {
         const div = document.createElement('div');
         div.className = "accordion-item border-0";
@@ -110,7 +116,6 @@ function cargarNotas() {
 function agregarNota() {
     notas.unshift({ titulo: "", contenido: "" });
     guardarYRefrescar();
-    // Abrir la primera nota automáticamente al crearla
     setTimeout(() => {
         const firstCollapse = document.querySelector('.accordion-collapse');
         if (firstCollapse) new bootstrap.Collapse(firstCollapse, { show: true });
@@ -156,7 +161,6 @@ function cerrarLectura() {
     document.getElementById('controles-lectura').classList.remove('active');
 }
 
-// Cerrar barra si se hace clic fuera del textarea
 document.addEventListener('click', (e) => {
     if (elementoActivo && !e.target.closest('.accordion-item') && !e.target.closest('#controles-lectura')) {
         cerrarLectura();

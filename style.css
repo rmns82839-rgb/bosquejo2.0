@@ -314,3 +314,18 @@ input[type="color"] {
     button { padding: 10px 12px; font-size: 14px; }
     .editable { font-size: 18px; }
 }
+
+#hammer-icon, .side-tab {
+    cursor: move; /* Indica que se puede arrastrar */
+    touch-action: none; /* Mejora la respuesta en móviles */
+}
+
+/* Efecto de ocultado automático cuando se pega al borde */
+.toolbar-docked {
+    opacity: 0.4; /* Se vuelve semitransparente */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toolbar-docked:hover {
+    opacity: 1; /* Se ilumina al pasar el mouse o tocarla */
+}

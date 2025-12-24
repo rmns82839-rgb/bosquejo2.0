@@ -1,172 +1,291 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Versículos Clave - Studio</title>
+    <title>Bible Studio - Versículos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <style>
         :root { 
-            --primary-gold: #f1c40f; 
-            --dark-bg: #1e293b; 
-            --accent-blue: #3498db; 
-            --bible-color: #6d28d9; /* Un color púrpura elegante para Bible.com */
+            --primary-green: #198754; 
+            --light-gold: #fff3cd; 
+            --dark-gold: #856404;
         }
         
-        body { background-color: #f8fafc !important; font-family: 'Times New Roman', serif; }
-        .header-versiculos { background: var(--dark-bg); color: white; padding: 25px 0; border-bottom: 5px solid var(--primary-gold); }
+        body { background-color: #f4f7f6 !important; font-family: 'Times New Roman', serif; }
         
-        .card-versiculo { 
-            background: white; border: none; border-radius: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s;
-            margin-bottom: 20px; overflow: hidden;
+        /* Estilos de Versículos (Acordeón) */
+        .header-verso { display: flex; align-items: center; width: 100%; gap: 10px; padding: 10px; }
+        .input-titulo-punto { 
+            flex-grow: 1; border: none; background: transparent; 
+            color: var(--primary-green) !important; font-weight: bold; font-size: 1.1rem;
         }
-        .card-versiculo:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        
-        .ref-biblica { color: var(--accent-blue); font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .texto-biblico { font-style: italic; font-size: 1.2rem; color: #334155; line-height: 1.6; }
-        
-        /* Estilo del Recordatorio */
-        .reminder-box {
-            background: #fff3cd; border: 1px solid #ffeeba; border-radius: 10px;
-            padding: 10px 20px; margin-bottom: 20px; display: flex; 
-            align-items: center; justify-content: space-between;
+        .input-titulo-punto:focus { outline: none; border-bottom: 1px solid var(--primary-green); }
+        textarea.text-success { 
+            font-style: italic; border-left: 5px solid var(--primary-green) !important; 
+            border-radius: 0 8px 8px 0; line-height: 1.5;
         }
-        .form-check-input:checked { background-color: #198754; border-color: #198754; }
 
-        .btn-accion { border-radius: 10px; font-weight: bold; transition: 0.3s; }
+        /* Estilos de Alarma (Acordeón) */
+        .alarm-section .accordion-button { background-color: var(--light-gold) !important; color: var(--dark-gold) !important; }
+        .time-chip {
+            background-color: white; border: 1px solid var(--primary-green);
+            padding: 5px 12px; border-radius: 20px; font-weight: bold;
+            color: var(--primary-green); display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-remove-time { cursor: pointer; color: #dc3545; font-weight: bold; }
 
-        /* Botón personalizado de Bible.com */
-        .btn-bible { background-color: var(--bible-color); color: white; border: none; }
-        .btn-bible:hover { background-color: #5b21b6; color: white; transform: scale(1.05); }
+        /* Controles de Lectura Flotantes */
+        #controles-lectura {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white;
+            padding: 10px 20px; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 1050;
+            display: none; /* Se activa al enfocar un textarea */
+        }
+        .btn-font { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: #f8f9fa; }
     </style>
 </head>
-<body>
+<body onclick="desbloquearAudio()"> <audio id="audioAlarma" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+</audio>
 
-<header class="header-versiculos no-print shadow">
-    <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div>
-            <h1 class="h3 mb-0">📑 Versículos Clave</h1>
-            <small class="opacity-75">Memorización y Cimentación Bíblica</small>
-        </div>
-        <div class="d-flex gap-2 align-items-center">
-            <a href="https://bible.com" target="_blank" class="btn btn-bible btn-sm btn-accion">📖 Bible.com</a>
-            
-            <div class="vr mx-1 text-white opacity-25"></div> <a href="index.html" class="btn btn-outline-light btn-sm btn-accion">🔙 Volver</a>
-            <button class="btn btn-warning btn-sm btn-accion" onclick="nuevoVersiculo()">+ Añadir</button>
-        </div>
-    </div>
-</header>
-
-<div class="container-fluid px-4 mt-4">
-    <div class="reminder-box shadow-sm">
-        <div>
-            <strong>🔔 Recordatorio de Memorización</strong>
-            <div class="small text-muted">Te avisaré a las 11am, 3pm y 8pm para leer tus versículos.</div>
-        </div>
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="switchAlerta" onchange="toggleAlerta(this.checked)">
-            <label class="form-check-label fw-bold" for="switchAlerta" id="labelAlerta">OFF</label>
+<nav class="navbar navbar-dark bg-success mb-3 shadow-sm no-print">
+    <div class="container-fluid px-3">
+        <a href="index.html" class="navbar-brand fw-bold">🔙 Inicio</a>
+        <div class="dropdown">
+            <button class="btn btn-light btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">📑 Menú</button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li><button class="dropdown-item text-success fw-bold" onclick="agregarVersiculo()">➕ Añadir Versículo</button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="https://bible.com" target="_blank">📖 Bible.com</a></li>
+                <li><a class="dropdown-item" href="https://www.blueletterbible.org" target="_blank">🔍 Concordancia</a></li>
+            </ul>
         </div>
     </div>
+</nav>
 
-    <input type="text" id="busqueda" class="form-control form-control-lg shadow-sm mb-4" placeholder="🔍 Buscar por palabra o libro..." onkeyup="filtrar()">
+<div class="container-fluid px-3 pb-5">
+    
+    <div class="accordion alarm-section mb-4 shadow-sm" id="accordionAlarma">
+        <div class="accordion-item border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colapsoAlarma">
+                    🔔 Recordatorios <span id="resumenAlarma" class="ms-2 badge bg-success"></span>
+                </button>
+            </h2>
+            <div id="colapsoAlarma" class="accordion-collapse collapse" data-bs-parent="#accordionAlarma">
+                <div class="accordion-body bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small fw-bold text-muted">Alertas Diarias:</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="switchAlerta" onchange="toggleAlerta(this.checked)">
+                            <label class="form-check-label fw-bold" for="switchAlerta" id="labelAlerta">OFF</label>
+                        </div>
+                    </div>
+                    
+                    <div id="panelAlarmas" style="transition: 0.3s; opacity: 0.5; pointer-events: none;">
+                        <div class="d-flex gap-2 mb-3">
+                            <input type="time" id="pickerHora" class="form-control">
+                            <button class="btn btn-success" onclick="agregarHora()">Agregar</button>
+                        </div>
+                        <div id="listaHoras" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="contenedorVersiculos" class="row"></div>
+    <div id="contenedorVersos" class="accordion shadow-sm mb-5"></div>
+</div>
 
-    <div id="vacio" class="text-center p-5" style="display:none;">
-        <h4 class="text-muted">No hay versículos guardados.</h4>
-        <p>Presiona el botón + para empezar tu colección.</p>
+<div id="controles-lectura">
+    <div id="titulo-lectura-actual" class="fw-bold text-success small text-uppercase">Lectura</div>
+    <div class="d-flex gap-2">
+        <button class="btn-font" onclick="cambiarTamanoLetra(-2)">A-</button>
+        <button class="btn-font" onclick="cambiarTamanoLetra(2)">A+</button>
+        <button class="btn btn-sm btn-dark ms-2" onclick="cerrarLectura()">Cerrar</button>
     </div>
 </div>
 
 <script>
-    let versiculos = JSON.parse(localStorage.getItem('mis_versiculos_v1')) || [];
-    let alertaActiva = JSON.parse(localStorage.getItem('alerta_memorizacion')) || false;
+/* =========================================
+   ESTADO INICIAL
+   ========================================= */
+let versos = JSON.parse(localStorage.getItem('mis_versos_v2')) || [];
+let alertaActiva = JSON.parse(localStorage.getItem('alerta_memorizacion')) || false;
+let horasAlertas = JSON.parse(localStorage.getItem('horas_config_v2')) || ["07:00", "15:00", "21:00"];
+let fontSizeActual = 18;
+let elementoActivo = null;
+let audioPermitido = false;
 
-    function cargar() {
-        const c = document.getElementById('contenedorVersiculos');
-        const v = document.getElementById('vacio');
-        c.innerHTML = "";
-        
-        if (versiculos.length === 0) { v.style.display = "block"; return; }
-        v.style.display = "none";
+/* =========================================
+   GESTIÓN DE VERSÍCULOS
+   ========================================= */
+function cargarVersos() {
+    const contenedor = document.getElementById('contenedorVersos');
+    contenedor.innerHTML = "";
+    
+    versos.forEach((v, index) => {
+        const div = document.createElement('div');
+        div.className = "accordion-item border-0 border-bottom";
+        div.innerHTML = `
+            <h2 class="accordion-header bg-white">
+                <div class="header-verso">
+                    <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#v${index}">📖</button>
+                    <input type="text" class="input-titulo-punto" value="${v.cita}" 
+                           oninput="actualizarVerso(${index}, 'cita', this.value)" placeholder="Libro y Cap...">
+                    <button class="btn btn-link text-danger p-1" onclick="borrarVerso(${index})">🗑️</button>
+                </div>
+            </h2>
+            <div id="v${index}" class="accordion-collapse collapse" data-bs-parent="#contenedorVersos">
+                <div class="accordion-body p-2 bg-white">
+                    <textarea class="form-control text-success" rows="6" 
+                              oninput="actualizarVerso(${index}, 'texto', this.value)" 
+                              onfocus="abrirLectura(this, '${v.cita || 'VERSÍCULO'}')"
+                              style="font-size: ${fontSizeActual}px"
+                              placeholder="Escribe el versículo...">${v.texto}</textarea>
+                </div>
+            </div>`;
+        contenedor.appendChild(div);
+    });
+}
 
-        versiculos.forEach((item, i) => {
-            c.innerHTML += `
-                <div class="col-12 col-md-6 col-lg-4 item-v">
-                    <div class="card card-versiculo p-4">
-                        <div class="ref-biblica d-flex justify-content-between">
-                            <span>📖 ${item.cita}</span>
-                            <div class="no-print">
-                                <button class="btn btn-link btn-sm text-primary p-0" onclick="editar(${i})">✏️</button>
-                                <button class="btn btn-link btn-sm text-danger p-0 ms-2" onclick="borrar(${i})">🗑️</button>
-                            </div>
-                        </div>
-                        <div class="texto-biblico mt-3">"${item.texto}"</div>
-                        <div class="mt-3 small text-uppercase text-muted fw-bold" style="letter-spacing:1px; font-size:0.7rem;">
-                            Categoría: ${item.tag || 'General'}
-                        </div>
-                    </div>
-                </div>`;
-        });
-        
-        document.getElementById('switchAlerta').checked = alertaActiva;
-        document.getElementById('labelAlerta').innerText = alertaActiva ? "ON" : "OFF";
+function agregarVersiculo() {
+    versos.unshift({ cita: "", texto: "" });
+    guardarYRefrescar();
+}
+
+function actualizarVerso(index, campo, valor) {
+    versos[index][campo] = valor;
+    localStorage.setItem('mis_versos_v2', JSON.stringify(versos));
+}
+
+function borrarVerso(index) {
+    if(confirm("¿Eliminar este versículo?")) {
+        versos.splice(index, 1);
+        guardarYRefrescar();
     }
+}
 
-    function nuevoVersiculo() {
-        const cita = prompt("Cita Bíblica (Ej: Juan 3:16):"); if(!cita) return;
-        const texto = prompt("Texto del versículo:"); if(!texto) return;
-        const tag = prompt("Etiqueta (Ej: Promesa, Fe, Gracia):") || "General";
-        versiculos.unshift({cita, texto, tag});
-        guardar();
+function guardarYRefrescar() {
+    localStorage.setItem('mis_versos_v2', JSON.stringify(versos));
+    cargarVersos();
+}
+
+/* =========================================
+   SISTEMA DE ALARMAS Y NOTIFICACIONES
+   ========================================= */
+
+function desbloquearAudio() {
+    if (!audioPermitido) {
+        const audio = document.getElementById('audioAlarma');
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioPermitido = true;
+        }).catch(() => {});
     }
+}
 
-    function editar(i) {
-        versiculos[i].cita = prompt("Cita:", versiculos[i].cita) || versiculos[i].cita;
-        versiculos[i].texto = prompt("Texto:", versiculos[i].texto) || versiculos[i].texto;
-        versiculos[i].tag = prompt("Etiqueta:", versiculos[i].tag) || versiculos[i].tag;
-        guardar();
+function renderizarAlarmas() {
+    const lista = document.getElementById('listaHoras');
+    const resumen = document.getElementById('resumenAlarma');
+    const switchEl = document.getElementById('switchAlerta');
+    const panel = document.getElementById('panelAlarmas');
+
+    switchEl.checked = alertaActiva;
+    document.getElementById('labelAlerta').innerText = alertaActiva ? "ON" : "OFF";
+    panel.style.opacity = alertaActiva ? "1" : "0.5";
+    panel.style.pointerEvents = alertaActiva ? "all" : "none";
+    
+    resumen.innerText = alertaActiva ? `${horasAlertas.length} activas` : "OFF";
+
+    lista.innerHTML = "";
+    horasAlertas.sort().forEach((h, i) => {
+        lista.innerHTML += `
+            <div class="time-chip">
+                ⏰ ${h} <span class="btn-remove-time" onclick="borrarHora(${i})">✕</span>
+            </div>`;
+    });
+}
+
+function agregarHora() {
+    const h = document.getElementById('pickerHora').value;
+    if(!h || horasAlertas.includes(h)) return;
+    horasAlertas.push(h);
+    localStorage.setItem('horas_config_v2', JSON.stringify(horasAlertas));
+    renderizarAlarmas();
+}
+
+function borrarHora(i) {
+    horasAlertas.splice(i, 1);
+    localStorage.setItem('horas_config_v2', JSON.stringify(horasAlertas));
+    renderizarAlarmas();
+}
+
+function toggleAlerta(valor) {
+    alertaActiva = valor;
+    localStorage.setItem('alerta_memorizacion', JSON.stringify(valor));
+    if (valor && "Notification" in window) {
+        Notification.requestPermission();
     }
+    renderizarAlarmas();
+}
 
-    function borrar(i) { if(confirm("¿Eliminar este versículo?")) { versiculos.splice(i,1); guardar(); } }
-    function guardar() { localStorage.setItem('mis_versiculos_v1', JSON.stringify(versiculos)); cargar(); }
+function verificarReloj() {
+    if (!alertaActiva) return;
+    const ahora = new Date();
+    const actual = `${ahora.getHours().toString().padStart(2,'0')}:${ahora.getMinutes().toString().padStart(2,'0')}`;
+    
+    if (horasAlertas.includes(actual) && ahora.getSeconds() === 0) {
+        // Sonar
+        const audio = document.getElementById('audioAlarma');
+        audio.play().catch(() => console.log("Interacción requerida para sonido"));
 
-    function filtrar() {
-        const t = document.getElementById('busqueda').value.toLowerCase();
-        document.querySelectorAll('.item-v').forEach(it => {
-            it.style.display = it.innerText.toLowerCase().includes(t) ? "block" : "none";
-        });
-    }
-
-    // --- SISTEMA DE ALERTAS CORREGIDO ---
-    function toggleAlerta(valor) {
-        alertaActiva = valor;
-        localStorage.setItem('alerta_memorizacion', JSON.stringify(valor));
-        document.getElementById('labelAlerta').innerText = valor ? "ON" : "OFF";
-        if(valor) alert("¡Activado! Recibirás alertas a las 11am, 3pm y 8pm.");
-    }
-
-    function verificarHora() {
-        if (!alertaActiva) return;
-        
-        const ahora = new Date();
-        const hora = ahora.getHours();
-        const minutos = ahora.getMinutes();
-        const segundos = ahora.getSeconds();
-
-        // Horas: 11 (11am), 15 (3pm), 20 (8pm)
-        const horasAlerta = [11, 15, 20];
-
-        if (horasAlerta.includes(hora) && minutos === 0 && segundos === 0) {
-            alert("✨ MOMENTO DE MEMORIZAR ✨\n\n'La palabra de Cristo more en abundancia en vosotros'.\n\nEs hora de leer tus versículos (3 veces). ¡Ánimo!");
+        // Notificación de Sistema
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("✨ Bible Studio", {
+                body: "Es momento de tus versículos.",
+                icon: "https://cdn-icons-png.flaticon.com/512/3004/3004413.png"
+            });
         }
-    }
 
-    setInterval(verificarHora, 1000);
-    window.onload = cargar;
+        alert("✨ MOMENTO DE MEMORIZAR ✨\n\nLee tus versículos guardados. ¡La Palabra es vida!");
+    }
+}
+
+/* =========================================
+   MODO LECTURA
+   ========================================= */
+function abrirLectura(el, titulo) {
+    elementoActivo = el;
+    document.getElementById('titulo-lectura-actual').innerText = titulo || "LECTURA";
+    document.getElementById('controles-lectura').style.display = "flex";
+}
+
+function cerrarLectura() {
+    if (elementoActivo) elementoActivo.blur();
+    document.getElementById('controles-lectura').style.display = "none";
+}
+
+function cambiarTamanoLetra(delta) {
+    fontSizeActual += delta;
+    if (elementoActivo) {
+        elementoActivo.style.fontSize = fontSizeActual + "px";
+    }
+}
+
+/* =========================================
+   INICIO
+   ========================================= */
+setInterval(verificarReloj, 1000);
+window.onload = () => {
+    cargarVersos();
+    renderizarAlarmas();
+};
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

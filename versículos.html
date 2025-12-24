@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Bible Studio - Versículos</title>
+    <title>Bible Studio - Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { 
@@ -13,138 +13,199 @@
             --dark-gold: #856404;
         }
         
-        body { background-color: #f4f7f6 !important; font-family: 'Times New Roman', serif; }
+        body { 
+            background-color: #f4f7f6 !important; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            padding-bottom: 80px; /* Espacio para la barra de lectura */
+        }
         
-        /* Estilos de Versículos (Acordeón) */
-        .header-verso { display: flex; align-items: center; width: 100%; gap: 10px; padding: 10px; }
+        /* Contenedor Principal Responsivo */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Acordeones Estilo Card */
+        .accordion-item {
+            border: none !important;
+            margin-bottom: 12px;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        /* Cabeceras más táctiles */
+        .header-verso { 
+            display: flex; 
+            align-items: center; 
+            width: 100%; 
+            gap: 12px; 
+            padding: 12px; 
+            background: #fff;
+        }
+
         .input-titulo-punto { 
-            flex-grow: 1; border: none; background: transparent; 
-            color: var(--primary-green) !important; font-weight: bold; font-size: 1.1rem;
+            flex-grow: 1; 
+            border: none; 
+            background: transparent; 
+            color: var(--primary-green) !important; 
+            font-weight: bold; 
+            font-size: 1rem;
+            width: 100%;
         }
-        .input-titulo-punto:focus { outline: none; border-bottom: 1px solid var(--primary-green); }
+
+        /* Textarea adaptable */
         textarea.text-success { 
-            font-style: italic; border-left: 5px solid var(--primary-green) !important; 
-            border-radius: 0 8px 8px 0; line-height: 1.5;
+            font-style: italic; 
+            border-left: 5px solid var(--primary-green) !important; 
+            border-radius: 4px;
+            line-height: 1.6;
+            resize: none;
+            border-top: none; border-right: none; border-bottom: none;
+            background-color: #fcfdfc;
         }
 
-        /* Estilos de Alarma (Acordeón) */
-        .alarm-section .accordion-button { background-color: var(--light-gold) !important; color: var(--dark-gold) !important; }
+        /* Alarmas Responsivas */
+        .time-controls-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
         .time-chip {
-            background-color: white; border: 1px solid var(--primary-green);
-            padding: 5px 12px; border-radius: 20px; font-weight: bold;
-            color: var(--primary-green); display: inline-flex; align-items: center; gap: 8px;
+            background-color: white; 
+            border: 1px solid var(--primary-green);
+            padding: 8px 15px; 
+            border-radius: 25px; 
+            font-weight: bold;
+            color: var(--primary-green); 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px;
+            font-size: 0.9rem;
         }
-        .btn-remove-time { cursor: pointer; color: #dc3545; font-weight: bold; }
 
-        /* Controles de Lectura Flotantes */
+        /* Barra de lectura optimizada para móvil */
         #controles-lectura {
-            position: fixed; bottom: 0; left: 0; right: 0; background: white;
-            padding: 10px 20px; display: flex; justify-content: space-between;
-            align-items: center; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 1050;
-            display: none; /* Se activa al enfocar un textarea */
+            position: fixed; 
+            bottom: 0; left: 0; right: 0; 
+            background: #ffffff;
+            padding: 12px 20px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15); 
+            z-index: 2000;
+            display: none;
+            border-top: 3px solid var(--primary-green);
         }
-        .btn-font { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: #f8f9fa; }
+
+        .btn-font { 
+            width: 45px; height: 45px; 
+            border-radius: 12px; 
+            border: 1px solid #dee2e6; 
+            background: #f8f9fa;
+            font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Ocultar elementos al imprimir */
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body onclick="desbloquearAudio()"> <audio id="audioAlarma" preload="auto">
+<body onclick="desbloquearAudio()">
+
+<audio id="audioAlarma" preload="auto">
     <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
 </audio>
 
-<nav class="navbar navbar-dark bg-success mb-3 shadow-sm no-print">
-    <div class="container-fluid px-3">
+<nav class="navbar navbar-dark bg-success mb-3 shadow-sm no-print sticky-top">
+    <div class="container-fluid main-container">
         <a href="index.html" class="navbar-brand fw-bold">🔙 Inicio</a>
         <div class="dropdown">
-            <button class="btn btn-light btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">📑 Menú</button>
-            <ul class="dropdown-menu dropdown-menu-end shadow">
-                <li><button class="dropdown-item text-success fw-bold" onclick="agregarVersiculo()">➕ Añadir Versículo</button></li>
+            <button class="btn btn-light btn-sm dropdown-toggle fw-bold py-2 px-3" type="button" data-bs-toggle="dropdown">📑 Menú</button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                <li><button class="dropdown-item text-success fw-bold py-2" onclick="agregarVersiculo()">➕ Añadir Versículo</button></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="https://bible.com" target="_blank">📖 Bible.com</a></li>
-                <li><a class="dropdown-item" href="https://www.blueletterbible.org" target="_blank">🔍 Concordancia</a></li>
+                <li><a class="dropdown-item py-2" href="https://bible.com" target="_blank">📖 Bible.com</a></li>
+                <li><a class="dropdown-item py-2" href="https://www.blueletterbible.org" target="_blank">🔍 Concordancia</a></li>
             </ul>
         </div>
     </div>
 </nav>
 
-<div class="container-fluid px-3 pb-5">
+<div class="container-fluid main-container px-3">
     
-    <div class="accordion alarm-section mb-4 shadow-sm" id="accordionAlarma">
-        <div class="accordion-item border-0">
+    <div class="accordion alarm-section mb-4" id="accordionAlarma">
+        <div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colapsoAlarma">
                     🔔 Recordatorios <span id="resumenAlarma" class="ms-2 badge bg-success"></span>
                 </button>
             </h2>
             <div id="colapsoAlarma" class="accordion-collapse collapse" data-bs-parent="#accordionAlarma">
-                <div class="accordion-body bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="small fw-bold text-muted">Alertas Diarias:</span>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="switchAlerta" onchange="toggleAlerta(this.checked)">
-                            <label class="form-check-label fw-bold" for="switchAlerta" id="labelAlerta">OFF</label>
+                <div class="accordion-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold text-secondary">Estado Alerta:</span>
+                        <div class="form-check form-switch scale-150">
+                            <input class="form-check-input" type="checkbox" id="switchAlerta" onchange="toggleAlerta(this.checked)" style="width: 50px; height: 25px;">
                         </div>
                     </div>
                     
                     <div id="panelAlarmas" style="transition: 0.3s; opacity: 0.5; pointer-events: none;">
-                        <div class="d-flex gap-2 mb-3">
-                            <input type="time" id="pickerHora" class="form-control">
-                            <button class="btn btn-success" onclick="agregarHora()">Agregar</button>
+                        <div class="time-controls-row">
+                            <input type="time" id="pickerHora" class="form-control form-control-lg">
+                            <button class="btn btn-success btn-lg px-4" onclick="agregarHora()">➕</button>
                         </div>
-                        <div id="listaHoras" class="d-flex flex-wrap gap-2"></div>
+                        <div id="listaHoras" class="d-flex flex-wrap gap-2 mt-3"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="contenedorVersos" class="accordion shadow-sm mb-5"></div>
+    <div id="contenedorVersos" class="accordion mb-5"></div>
 </div>
 
 <div id="controles-lectura">
-    <div id="titulo-lectura-actual" class="fw-bold text-success small text-uppercase">Lectura</div>
-    <div class="d-flex gap-2">
+    <div id="titulo-lectura-actual" class="fw-bold text-success small text-truncate me-2" style="max-width: 150px;">Lectura</div>
+    <div class="d-flex gap-2 align-items-center">
         <button class="btn-font" onclick="cambiarTamanoLetra(-2)">A-</button>
         <button class="btn-font" onclick="cambiarTamanoLetra(2)">A+</button>
-        <button class="btn btn-sm btn-dark ms-2" onclick="cerrarLectura()">Cerrar</button>
+        <button class="btn btn-dark fw-bold px-3 py-2 ms-2" onclick="cerrarLectura()">✕</button>
     </div>
 </div>
 
 <script>
-/* =========================================
-   ESTADO INICIAL
-   ========================================= */
+/* Mismo código lógico anterior con ajustes de interfaz */
 let versos = JSON.parse(localStorage.getItem('mis_versos_v2')) || [];
 let alertaActiva = JSON.parse(localStorage.getItem('alerta_memorizacion')) || false;
-let horasAlertas = JSON.parse(localStorage.getItem('horas_config_v2')) || ["07:00", "15:00", "21:00"];
+let horasAlertas = JSON.parse(localStorage.getItem('horas_config_v2')) || ["07:00", "21:00"];
 let fontSizeActual = 18;
 let elementoActivo = null;
 let audioPermitido = false;
 
-/* =========================================
-   GESTIÓN DE VERSÍCULOS
-   ========================================= */
 function cargarVersos() {
     const contenedor = document.getElementById('contenedorVersos');
     contenedor.innerHTML = "";
     
     versos.forEach((v, index) => {
         const div = document.createElement('div');
-        div.className = "accordion-item border-0 border-bottom";
+        div.className = "accordion-item";
         div.innerHTML = `
-            <h2 class="accordion-header bg-white">
-                <div class="header-verso">
-                    <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#v${index}">📖</button>
-                    <input type="text" class="input-titulo-punto" value="${v.cita}" 
-                           oninput="actualizarVerso(${index}, 'cita', this.value)" placeholder="Libro y Cap...">
-                    <button class="btn btn-link text-danger p-1" onclick="borrarVerso(${index})">🗑️</button>
-                </div>
-            </h2>
+            <div class="header-verso">
+                <button class="btn btn-outline-success border-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#v${index}">📖</button>
+                <input type="text" class="input-titulo-punto" value="${v.cita}" 
+                       oninput="actualizarVerso(${index}, 'cita', this.value)" placeholder="Título o Cita...">
+                <button class="btn btn-light text-danger fw-bold" onclick="borrarVerso(${index})">🗑️</button>
+            </div>
             <div id="v${index}" class="accordion-collapse collapse" data-bs-parent="#contenedorVersos">
-                <div class="accordion-body p-2 bg-white">
-                    <textarea class="form-control text-success" rows="6" 
+                <div class="accordion-body p-3 pt-0">
+                    <textarea class="form-control text-success shadow-sm" rows="5" 
                               oninput="actualizarVerso(${index}, 'texto', this.value)" 
                               onfocus="abrirLectura(this, '${v.cita || 'VERSÍCULO'}')"
-                              style="font-size: ${fontSizeActual}px"
-                              placeholder="Escribe el versículo...">${v.texto}</textarea>
+                              style="font-size: ${fontSizeActual}px">${v.texto}</textarea>
                 </div>
             </div>`;
         contenedor.appendChild(div);
@@ -173,39 +234,27 @@ function guardarYRefrescar() {
     cargarVersos();
 }
 
-/* =========================================
-   SISTEMA DE ALARMAS Y NOTIFICACIONES
-   ========================================= */
-
 function desbloquearAudio() {
     if (!audioPermitido) {
         const audio = document.getElementById('audioAlarma');
-        audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            audioPermitido = true;
-        }).catch(() => {});
+        audio.play().then(() => { audio.pause(); audio.currentTime = 0; audioPermitido = true; }).catch(() => {});
     }
 }
 
 function renderizarAlarmas() {
-    const lista = document.getElementById('listaHoras');
-    const resumen = document.getElementById('resumenAlarma');
     const switchEl = document.getElementById('switchAlerta');
     const panel = document.getElementById('panelAlarmas');
-
     switchEl.checked = alertaActiva;
-    document.getElementById('labelAlerta').innerText = alertaActiva ? "ON" : "OFF";
     panel.style.opacity = alertaActiva ? "1" : "0.5";
     panel.style.pointerEvents = alertaActiva ? "all" : "none";
-    
-    resumen.innerText = alertaActiva ? `${horasAlertas.length} activas` : "OFF";
+    document.getElementById('resumenAlarma').innerText = alertaActiva ? `${horasAlertas.length}` : "OFF";
 
+    const lista = document.getElementById('listaHoras');
     lista.innerHTML = "";
     horasAlertas.sort().forEach((h, i) => {
         lista.innerHTML += `
-            <div class="time-chip">
-                ⏰ ${h} <span class="btn-remove-time" onclick="borrarHora(${i})">✕</span>
+            <div class="time-chip shadow-sm">
+                ⏰ ${h} <span class="btn-remove-time ms-2" onclick="borrarHora(${i})">✕</span>
             </div>`;
     });
 }
@@ -227,9 +276,7 @@ function borrarHora(i) {
 function toggleAlerta(valor) {
     alertaActiva = valor;
     localStorage.setItem('alerta_memorizacion', JSON.stringify(valor));
-    if (valor && "Notification" in window) {
-        Notification.requestPermission();
-    }
+    if (valor && "Notification" in window) Notification.requestPermission();
     renderizarAlarmas();
 }
 
@@ -237,27 +284,15 @@ function verificarReloj() {
     if (!alertaActiva) return;
     const ahora = new Date();
     const actual = `${ahora.getHours().toString().padStart(2,'0')}:${ahora.getMinutes().toString().padStart(2,'0')}`;
-    
     if (horasAlertas.includes(actual) && ahora.getSeconds() === 0) {
-        // Sonar
-        const audio = document.getElementById('audioAlarma');
-        audio.play().catch(() => console.log("Interacción requerida para sonido"));
-
-        // Notificación de Sistema
+        document.getElementById('audioAlarma').play().catch(() => {});
         if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("✨ Bible Studio", {
-                body: "Es momento de tus versículos.",
-                icon: "https://cdn-icons-png.flaticon.com/512/3004/3004413.png"
-            });
+            new Notification("✨ Bible Studio", { body: "Hora de tu memorización diaria." });
         }
-
-        alert("✨ MOMENTO DE MEMORIZAR ✨\n\nLee tus versículos guardados. ¡La Palabra es vida!");
+        alert("✨ MOMENTO DE MEMORIZAR ✨\n\n" + actual);
     }
 }
 
-/* =========================================
-   MODO LECTURA
-   ========================================= */
 function abrirLectura(el, titulo) {
     elementoActivo = el;
     document.getElementById('titulo-lectura-actual').innerText = titulo || "LECTURA";
@@ -271,19 +306,11 @@ function cerrarLectura() {
 
 function cambiarTamanoLetra(delta) {
     fontSizeActual += delta;
-    if (elementoActivo) {
-        elementoActivo.style.fontSize = fontSizeActual + "px";
-    }
+    if (elementoActivo) elementoActivo.style.fontSize = fontSizeActual + "px";
 }
 
-/* =========================================
-   INICIO
-   ========================================= */
 setInterval(verificarReloj, 1000);
-window.onload = () => {
-    cargarVersos();
-    renderizarAlarmas();
-};
+window.onload = () => { cargarVersos(); renderizarAlarmas(); };
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -7,43 +7,77 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Ajuste específico para que el título no empuje al botón de borrar en móviles */
-        .header-nota { display: flex; align-items: center; width: 100%; gap: 10px; }
-        .input-titulo-punto { flex-grow: 1; min-width: 0; }
+        /* Consistencia con la App Principal */
+        :root { --dark-blue: #1e293b; --accent-blue: #3b82f6; }
+        
+        body { background-color: #f1f5f9 !important; font-family: 'Times New Roman', serif; }
+        .navbar { background-color: var(--dark-blue) !important; border-bottom: 2px solid var(--accent-blue); }
+        
+        .header-nota { 
+            display: flex; align-items: center; width: 100%; gap: 10px; 
+            background: white; border-radius: 8px; transition: 0.3s;
+        }
+        
+        .input-titulo-punto { 
+            flex-grow: 1; min-width: 0; border: none; outline: none; 
+            font-weight: bold; color: var(--dark-blue); font-size: 1rem;
+        }
+
+        .accordion-item { border-radius: 12px !important; margin-bottom: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* Controles de lectura flotantes mejorados */
+        #controles-lectura {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; background: var(--dark-blue);
+            color: white; padding: 12px; border-radius: 20px 20px 0 0;
+            display: flex; flex-direction: column; align-items: center;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10000; box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+        }
+        
+        #controles-lectura.active { bottom: 0; }
+        
+        .btn-zoom {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: white; width: 45px; height: 40px; border-radius: 8px; font-weight: bold;
+        }
+
         @media (max-width: 480px) {
             .navbar-brand { font-size: 0.9rem; }
             .btn-sm-custom { padding: 4px 8px; font-size: 0.75rem; }
+            .input-titulo-punto { font-size: 0.9rem; }
         }
     </style>
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-dark mb-3 shadow-sm no-print">
+<nav class="navbar navbar-dark mb-3 shadow-sm no-print">
     <div class="container-fluid px-3">
         <a href="index.html" class="navbar-brand fw-bold">🔙 Inicio</a>
-        <div class="d-flex gap-1">
-            <a href="https://www.indubiblia.org/estudio-de-la-biblia" target="_blank" class="btn btn-info btn-sm btn-sm-custom fw-bold text-white">🌐 Indubiblia</a>
-            <button class="btn btn-warning btn-sm btn-sm-custom fw-bold" onclick="agregarNota()">+ Nota</button>
+        <div class="d-flex gap-2">
+            <a href="https://www.indubiblia.org/estudio-de-la-biblia" target="_blank" class="btn btn-outline-info btn-sm btn-sm-custom fw-bold">🌐 Indubiblia</a>
+            <button class="btn btn-warning btn-sm btn-sm-custom fw-bold shadow-sm" onclick="agregarNota()">+ Nueva Nota</button>
         </div>
     </div>
 </nav>
 
-<div class="container-fluid px-3">
-    <div id="contenedorNotas" class="accordion shadow-sm"></div>
+<div class="container-fluid px-3 pb-5">
+    <div id="contenedorNotas" class="accordion border-0"></div>
 </div>
 
 <div id="controles-lectura">
-    <div id="titulo-lectura-actual">LEYENDO NOTA</div>
-    <div class="d-flex gap-2">
-        <button type="button" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(-2)">A-</button>
-        <button type="button" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(2)">A+</button>
-        <button type="button" class="btn-cerrar" onclick="cerrarLectura()">✕</button>
+    <div id="titulo-lectura-actual" class="small mb-2 text-uppercase fw-bold opacity-75">Nota Seleccionada</div>
+    <div class="d-flex gap-3 align-items: center;">
+        <button class="btn-zoom" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(-2)">A-</button>
+        <div class="divider" style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+        <button class="btn-zoom" onmousedown="event.preventDefault()" onclick="cambiarTamanoLetra(2)">A+</button>
+        <button class="btn btn-danger btn-sm ms-3" onclick="cerrarLectura()">Cerrar Edición</button>
     </div>
 </div>
 
 <script>
 let notas = JSON.parse(localStorage.getItem('mis_notas_libres')) || [];
-let fontSizeActual = 20;
+let fontSizeActual = 18;
 let elementoActivo = null;
 
 function cargarNotas() {
@@ -51,21 +85,22 @@ function cargarNotas() {
     contenedor.innerHTML = "";
     notas.forEach((nota, index) => {
         const div = document.createElement('div');
-        div.className = "accordion-item border-0 border-bottom";
+        div.className = "accordion-item border-0";
         div.innerHTML = `
             <h2 class="accordion-header bg-white">
                 <div class="header-nota p-2">
-                    <button class="btn btn-light btn-sm p-1" type="button" data-bs-toggle="collapse" data-bs-target="#n${index}">📌</button>
+                    <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#n${index}">📂</button>
                     <input type="text" class="input-titulo-punto" value="${nota.titulo}" 
-                           oninput="actualizarNota(${index}, 'titulo', this.value)" placeholder="Título...">
+                           oninput="actualizarNota(${index}, 'titulo', this.value)" placeholder="Título de la nota...">
                     <button class="btn btn-link text-danger p-1" onclick="borrarNota(${index})">🗑️</button>
                 </div>
             </h2>
             <div id="n${index}" class="accordion-collapse collapse" data-bs-parent="#contenedorNotas">
-                <div class="accordion-body p-2">
-                    <textarea class="form-control border-0 bg-light" rows="6" 
+                <div class="accordion-body p-2 bg-white">
+                    <textarea class="form-control border-0 bg-light shadow-inner" 
+                              style="border-radius:10px; resize: none;" rows="8" 
                               oninput="actualizarNota(${index}, 'contenido', this.value)" 
-                              onfocus="setLectura(this, '${nota.titulo || 'NOTA'}')" placeholder="Escribe aquí...">${nota.contenido}</textarea>
+                              onfocus="setLectura(this, '${nota.titulo || 'EDITANDO NOTA'}')" placeholder="Escribe tus reflexiones o notas teológicas aquí...">${nota.contenido}</textarea>
                 </div>
             </div>`;
         contenedor.appendChild(div);
@@ -75,6 +110,11 @@ function cargarNotas() {
 function agregarNota() {
     notas.unshift({ titulo: "", contenido: "" });
     guardarYRefrescar();
+    // Abrir la primera nota automáticamente al crearla
+    setTimeout(() => {
+        const firstCollapse = document.querySelector('.accordion-collapse');
+        if (firstCollapse) new bootstrap.Collapse(firstCollapse, { show: true });
+    }, 100);
 }
 
 function actualizarNota(index, campo, valor) {
@@ -83,7 +123,7 @@ function actualizarNota(index, campo, valor) {
 }
 
 function borrarNota(index) {
-    if(confirm("¿Borrar nota?")) {
+    if(confirm("¿Estás seguro de eliminar esta nota?")) {
         notas.splice(index, 1);
         guardarYRefrescar();
     }
@@ -96,17 +136,32 @@ function guardarYRefrescar() {
 
 function setLectura(el, titulo) {
     elementoActivo = el;
-    document.getElementById('titulo-lectura-actual').innerText = titulo;
+    const barra = document.getElementById('controles-lectura');
+    document.getElementById('titulo-lectura-actual').innerText = titulo || "Editando...";
+    barra.classList.add('active');
     el.style.fontSize = fontSizeActual + "px";
 }
 
 function cambiarTamanoLetra(delta) {
     fontSizeActual += delta;
-    if (fontSizeActual < 14) fontSizeActual = 14;
-    if (elementoActivo) elementoActivo.style.fontSize = fontSizeActual + "px";
+    if (fontSizeActual < 12) fontSizeActual = 12;
+    if (fontSizeActual > 40) fontSizeActual = 40;
+    if (elementoActivo) {
+        elementoActivo.style.fontSize = fontSizeActual + "px";
+    }
 }
 
-function cerrarLectura() { if (elementoActivo) elementoActivo.blur(); }
+function cerrarLectura() { 
+    if (elementoActivo) elementoActivo.blur(); 
+    document.getElementById('controles-lectura').classList.remove('active');
+}
+
+// Cerrar barra si se hace clic fuera del textarea
+document.addEventListener('click', (e) => {
+    if (elementoActivo && !e.target.closest('.accordion-item') && !e.target.closest('#controles-lectura')) {
+        cerrarLectura();
+    }
+});
 
 window.onload = cargarNotas;
 </script>

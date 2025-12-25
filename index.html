@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mi Bosquejo - Studio Edition</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -25,6 +26,9 @@
             transition: 0.2s;
         }
         .btn-history:active { transform: scale(0.8); }
+
+        /* Estilo para el input de importación oculto */
+        #inputImport { display: none; }
     </style>
 </head>
 <body>
@@ -50,22 +54,18 @@
 
                 <div class="divider"></div>
 
-                <select onchange="if(this.value) { 
-                    if(this.value.includes('http')) { 
-                        window.open(this.value, '_blank'); 
-                    } else { 
-                        window.location.href = this.value; 
-                    }
-                    this.value='';
-                }" class="study-select">
+                <select onchange="handleStudySelect(this)" class="study-select">
                     <option value="">📚 Estudio</option>
                     <option value="notas.html">📝 Mis Notas</option>
                     <option value="glosario.html">📖 Glosario Técnico</option>
-                    <option value="versículos.html">📑 Versículos Clave</option>
+                    <option value="versículos.html">📑 Mis Versículos</option>
+                    <option value="EXPORT">💾 Guardar Backup (Mes)</option>
+                    <option value="IMPORT">📂 Restaurar Backup</option>
                     <option value="https://diccionariobiblico.net/">📖 Diccionario Bíblico</option>
                     <option value="https://www.blueletterbible.org/">Blue Letter</option>
                     <option value="https://www.biblegateway.com/">Bible Gateway</option>
                 </select>
+                <input type="file" id="inputImport" accept=".json" onchange="importarDatosMes(event)">
             </div>
         </div>
 
@@ -126,5 +126,65 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Lógica para manejar las opciones especiales del menú de estudio
+        function handleStudySelect(select) {
+            const val = select.value;
+            if (!val) return;
+
+            if (val === "EXPORT") {
+                exportarDatosMes();
+            } else if (val === "IMPORT") {
+                document.getElementById('inputImport').click();
+            } else if (val.includes('http')) {
+                window.open(val, '_blank');
+            } else {
+                window.location.href = val;
+            }
+            select.value = ""; // Resetear select
+        }
+
+        // Función para exportar el bosquejo actual (Backup mensual)
+        function exportarDatosMes() {
+            const titulo = document.getElementById('main-title').innerText || 'bosquejo';
+            const datos = {
+                titulo: titulo,
+                contenido: document.getElementById('sections-container').innerHTML,
+                fecha: new Date().toLocaleDateString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(datos));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `Bosquejo_${titulo.replace(/\s+/g, '_')}.json`);
+            dlAnchor.click();
+        }
+
+        // Función para restaurar un bosquejo guardado
+        function importarDatosMes(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm("¿Restaurar este bosquejo? Se perderá lo que no hayas guardado.")) {
+                        document.getElementById('main-title').innerText = data.titulo || "";
+                        document.getElementById('sections-container').innerHTML = data.contenido || "";
+                        // Llamar a saveData() si existe en tu script.js para que persista en el navegador
+                        if (typeof saveData === "function") saveData();
+                        alert("¡Bosquejo restaurado con éxito!");
+                    }
+                } catch (err) {
+                    alert("Error: El archivo no es válido.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Registro de Service Worker para App
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        }
+    </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+
 /* =========================================
    CONFIGURACIÓN GENERAL
    ========================================= */
@@ -8,8 +9,10 @@ body {
     font-family: 'Times New Roman', Times, serif; 
     color: #1e293b;
     overflow-x: hidden;
+    /* Mejora para permitir selección global */
     user-select: text;
     -webkit-user-select: text;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Suavidad al cambiar a modo oscuro */
 }
 
 /* MEJORA STUDIO: BARRA DE PROGRESO DE PÁGINA */
@@ -20,7 +23,7 @@ body {
     width: 100%;
     height: 5px;
     background: #e2e8f0;
-    z-index: 10001; 
+    z-index: 10001; /* Por encima de todo */
 }
 #page-progress-bar {
     width: 0%;
@@ -70,10 +73,12 @@ body {
     z-index: 10;
     border: 2px solid white;
     user-select: none;
+    /* Mejora visual: */
     transition: transform 0.2s ease;
 }
 #hammer-icon:active { transform: scale(0.95); }
 
+/* Pestañas de activación laterales */
 .side-tab {
     width: 35px; 
     height: 35px; 
@@ -94,6 +99,7 @@ body {
 .left-tab { margin-right: -15px; }
 .right-tab { margin-left: -15px; }
 
+/* Cintas (Alas) */
 .ribbon {
     background: #1e293b;
     height: 50px;
@@ -170,7 +176,10 @@ input[type="color"] {
     border: none;
 }
 
-#btn-highlight:hover { background-color: #ffffb0 !important; }
+/* MEJORA RESALTADOR */
+#btn-highlight:hover {
+    background-color: #ffffb0 !important;
+}
 
 /* =========================================
    PAPEL Y TEXTO (Efecto Studio)
@@ -193,18 +202,22 @@ input[type="color"] {
     box-sizing: border-box;
     transition: all 0.3s ease;
     counter-reset: page; 
+    /* REFUERZO COPIABLE: */
     user-select: text !important;
     -webkit-user-select: text !important;
+    /* Mejora para el footer dinámico: */
     display: flex;
     flex-direction: column;
 }
 
+/* MEJORA: ESTILO PARA EL BLOQUE DE VERSÍCULOS */
 .scripture-block {
     margin: 20px 40px;
     padding: 15px;
     border-left: 4px solid #004a99;
     background-color: #f8fafc;
     page-break-inside: avoid;
+    transition: background-color 0.3s ease;
 }
 .scripture-text {
     font-style: italic;
@@ -226,6 +239,7 @@ input[type="color"] {
     border-top: 2px solid #f1f5f9; 
     padding-top: 15px;
     position: relative;
+    /* Evita cortes feos en PDF */
     page-break-inside: avoid;
 }
 
@@ -242,6 +256,7 @@ input[type="color"] {
     font-size: 19px; 
     line-height: 1.6; 
     min-height: 1.6em; 
+    /* REFUERZO COPIABLE: */
     user-select: text !important;
 }
 
@@ -251,6 +266,7 @@ input[type="color"] {
     font-style: italic;
 }
 
+/* Subpuntos Especiales */
 .sub-point-container {
     border-left: 2px solid #e2e8f0;
     padding-left: 15px;
@@ -259,7 +275,7 @@ input[type="color"] {
 }
 
 /* =========================================
-   MARCA DE AGUA Y LOGO
+   MARCA DE AGUA Y LOGO (Sin bordes)
    ========================================= */
 #watermark {
     position: absolute;
@@ -278,14 +294,15 @@ input[type="color"] {
     background: transparent !important;
 }
 
-/* FOOTER DEL SERMÓN */
+/* FOOTER DEL SERMÓN (MEJORADO) */
 #sermon-footer {
-    margin-top: auto; 
+    margin-top: auto; /* Empuja el footer siempre al final del contenido */
     padding-top: 30px;
     border-top: 1.5px solid #e2e8f0;
     text-align: center;
     position: relative;
     z-index: 1;
+    /* Asegura que no se rompa en el PDF */
     page-break-inside: avoid;
 }
 .footer-content .verse {
@@ -315,32 +332,34 @@ input[type="color"] {
 }
 
 /* =========================================
-   AJUSTES PARA PDF COPIABLE (MÁS IMPORTANTE)
+   SISTEMA DE PAGINACIÓN PDF (Contador)
    ========================================= */
 @media print {
-    body { background: white !important; }
-    
-    /* Quitamos sombras y efectos que vuelven el texto una "foto" */
+    body { 
+        background: white !important; 
+        color: black !important;
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+    }
     #paper { 
-        margin: 0 !important; 
+        margin: 0; 
         box-shadow: none !important; 
         border: none !important; 
         width: 100% !important;
+        user-select: text !important;
         padding: 15mm !important;
-        transform: none !important;
+        background: white !important;
+        color: black !important;
     }
-
-    /* Forzamos que el texto sea negro y vectorial */
-    .editable, .scripture-text, .scripture-ref, p, span, div {
-        color: #000000 !important;
-        text-shadow: none !important;
-        filter: none !important;
+    #floating-toolbar, .side-tab, .no-print, #page-progress-container { display: none !important; }
+    
+    /* Forzar visibilidad del footer en impresión */
+    #sermon-footer {
+        display: block !important;
+        opacity: 1 !important;
+        border-top: 1px solid #ccc !important;
     }
-
-    #floating-toolbar, .side-tab, .no-print, #page-progress-container, .page-break-indicator { 
-        display: none !important; 
-    }
-
+    .editable, .footer-content p { color: black !important; }
     #paper::after {
         counter-increment: page;
         content: "Página " counter(page);
@@ -350,17 +369,69 @@ input[type="color"] {
         font-size: 10pt;
         color: #94a3b8;
     }
+    
+    #watermark { opacity: 0.04 !important; }
 }
 
 /* =========================================
-   SALTOS DE PÁGINA
+   ESTADOS Y RESPONSIVIDAD
    ========================================= */
+.hidden { 
+    width: 0 !important; 
+    padding: 0 !important; 
+    opacity: 0;
+    pointer-events: none;
+    margin: 0 !important;
+}
+.active-tool {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+.btn-success { background: #10b981 !important; color: white !important; }
+.btn-danger { background: #ef4444 !important; color: white !important; }
+
+.purpose-select {
+    border: 1.5px solid #9b59b6;
+    color: #9b59b6;
+    background: white;
+    min-width: 150px;
+}
+
+@media (max-width: 768px) {
+    #paper { padding: 10mm; width: 98%; margin-top: 110px; }
+    .ribbon { max-width: 55vw; }
+    #hammer-icon { width: 55px; height: 55px; font-size: 24px; }
+    button { padding: 10px 12px; font-size: 14px; }
+    .editable { font-size: 18px; }
+}
+
+#hammer-icon, .side-tab {
+    cursor: move; 
+    touch-action: none; 
+}
+
+.toolbar-docked {
+    opacity: 0.4; 
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toolbar-docked:hover {
+    opacity: 1; 
+}
+
+/* REFUERZO FINAL PARA COPIADO DE TEXTO EN PDF */
+#paper *, .editable * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+/* Esto es lo que html2pdf usará para saltar */
 .html2pdf__page-break {
     display: block;
     height: 0;
     page-break-before: always;
 }
 
+/* Esto es lo que TÚ verás en pantalla para saber dónde termina la hoja */
 .page-break-indicator {
     margin: 40px 0;
     border-top: 2px dashed #3b82f6;
@@ -381,10 +452,59 @@ input[type="color"] {
     transform: translateX(-50%);
 }
 
-/* REFUERZO COPIADO */
-#paper *, .editable * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
+/* =========================================
+   NUEVAS MEJORAS: MODO OSCURO (STUDIO NIGHT)
+   ========================================= */
+
+body.dark-mode {
+    background-color: #0f172a; /* Azul noche profundo */
+    color: #f1f5f9;
 }
 
-.hidden { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; margin: 0 !important; }
+body.dark-mode #paper {
+    background-color: #1e293b; /* Gris azulado oscuro */
+    color: #f1f5f9;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .scripture-block {
+    background-color: #334155;
+    border-left-color: #3b82f6;
+}
+
+body.dark-mode .scripture-text, 
+body.dark-mode .scripture-ref, 
+body.dark-mode .editable {
+    color: #f1f5f9;
+}
+
+body.dark-mode .section-block {
+    border-top-color: #334155;
+}
+
+body.dark-mode .sub-point-container {
+    border-left-color: #475569;
+}
+
+body.dark-mode button:not(.btn-success):not(.btn-danger) {
+    background: #334155;
+    color: #f8fafc;
+}
+
+body.dark-mode button:hover {
+    background: #475569;
+}
+
+body.dark-mode #sermon-footer {
+    border-top-color: #334155;
+}
+
+body.dark-mode .mini-logo {
+    filter: brightness(1.2);
+}
+
+/* Tooltip de borrar estilos */
+button[title="Limpiar Formato"]:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+}

@@ -124,6 +124,7 @@ function execCmd(command, event, value = null) {
     
     updateButtonStates();
     saveData();
+    // MEJORA: Forzamos guardado de historial tras un cambio de formato
     saveHistory(); 
     
     if (command === 'foreColor' || command === 'hiliteColor') {
@@ -140,7 +141,6 @@ function updateButtonStates() {
         }
     });
 
-    // Mejora: Estado del resaltador
     const highlightBtn = document.getElementById('btn-highlight');
     if (highlightBtn) {
         const isHighlighted = document.queryCommandValue('hiliteColor') !== 'rgba(0, 0, 0, 0)' 
@@ -196,7 +196,6 @@ function addSection(label, color) {
     setTimeout(() => div.querySelector('.editable').focus(), 10);
 }
 
-// MEJORA: AGREGAR BLOQUE DE CITA BÍBLICA
 function addScripture() {
     const container = document.getElementById('sections-container');
     const div = document.createElement('div');
@@ -294,7 +293,7 @@ function saveData() {
         sCount: subPointCount
     };
     localStorage.setItem('bosquejo_data_v2', JSON.stringify(data));
-    updatePageProgress(); // Actualizar barra al guardar
+    updatePageProgress();
 }
 
 window.onload = () => {
@@ -318,25 +317,12 @@ function clearData() {
     }
 }
 
-/* MEJORA PDF: Opciones para texto seleccionable y márgenes para el footer */
 const pdfOptions = {
     margin: [10, 10, 20, 10], 
     filename: 'Bosquejo_MMM_Studio.pdf',
     image: { type: 'jpeg', quality: 1 },
-    html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        logging: false,
-        scrollY: 0
-    },
-    jsPDF: { 
-        unit: 'mm', 
-        format: 'a4', 
-        orientation: 'portrait', 
-        compress: true,
-        precision: 16
-    }
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, precision: 16 }
 };
 
 function applyFooter(pdf) {
@@ -367,17 +353,6 @@ function generatePDF() {
     });
 }
 
-function previewPDF() {
-    const element = document.getElementById('paper');
-    showLoading(true);
-    html2pdf().set(pdfOptions).from(element).toPdf().get('pdf').then(function (pdf) {
-        applyFooter(pdf);
-        const blob = pdf.output('bloburl');
-        window.open(blob, '_blank');
-        showLoading(false);
-    });
-}
-
 function showLoading(status) {
     let loader = document.getElementById('pdf-loader');
     if (!loader) {
@@ -390,7 +365,7 @@ function showLoading(status) {
 }
 
 /* =========================================
-   SISTEMA DE HISTORIAL (UNDO/REDO)
+   SISTEMA DE HISTORIAL (UNDO/REDO) UNIVERSAL
    ========================================= */
 let undoStack = [];
 let redoStack = [];
@@ -400,20 +375,24 @@ function saveHistory() {
     if (isRestoring) return;
     const paper = document.getElementById('paper');
     if (!paper) return;
+    
     const currentHTML = paper.innerHTML;
+    // Solo guardar si es diferente al último estado (evita duplicados innecesarios)
     if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentHTML) {
         undoStack.push(currentHTML);
-        if (undoStack.length > 40) undoStack.shift();
+        if (undoStack.length > 50) undoStack.shift(); // Ampliado a 50 pasos
         redoStack = []; 
     }
-    updatePageProgress(); // Sincronizar barra con historial
+    updatePageProgress();
 }
 
 function historyUndo(e) {
     if (e) e.preventDefault();
     if (undoStack.length > 1) {
         isRestoring = true;
+        // Movemos el estado actual a la pila de rehacer
         redoStack.push(undoStack.pop());
+        // El estado objetivo es el que queda arriba de la pila
         const targetState = undoStack[undoStack.length - 1];
         document.getElementById('paper').innerHTML = targetState;
         saveData();
@@ -433,25 +412,44 @@ function historyRedo(e) {
     }
 }
 
+// ATAJOS DE TECLADO: Ctrl+Z y Ctrl+Y
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' || e.key === 'Z') historyUndo(e);
+        if (e.key === 'y' || e.key === 'Y') historyRedo(e);
+    }
+});
+
 function initHistorySystem() {
     const targetNode = document.getElementById('paper');
     if (!targetNode) return;
-    const observer = new MutationObserver(() => saveHistory());
-    observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
+
+    // Guardar estado inicial
     saveHistory();
+
+    const observer = new MutationObserver(() => {
+        // Retraso para no saturar con cada letra escrita
+        clearTimeout(window.historyTimer);
+        window.historyTimer = setTimeout(saveHistory, 500);
+    });
+
+    observer.observe(targetNode, { 
+        childList: true, 
+        subtree: true, 
+        characterData: true 
+    });
 }
-// Añade esta función a tu script.js
+
 function addPageBreak() {
     const container = document.getElementById('sections-container');
     const hr = document.createElement('div');
     hr.className = 'page-break-indicator no-print';
-    hr.innerHTML = '<span>--- SALTO DE PÁGINA (PASA A LA HOJA 2) ---</span>';
-    
-    // El elemento real que html2pdf reconoce para saltar
+    hr.innerHTML = '<span>--- SALTO DE PÁGINA ---</span>';
     const breaker = document.createElement('div');
     breaker.className = 'html2pdf__page-break'; 
     
     container.appendChild(hr);
     container.appendChild(breaker);
     saveData();
+    saveHistory(); // Capturamos el salto de página en el historial
 }

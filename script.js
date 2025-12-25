@@ -126,8 +126,7 @@ function execCmd(command, event, value = null) {
     saveData();
     saveHistory(); 
     
-    // Devolver el foco al papel después de aplicar color
-    if (command === 'foreColor') {
+    if (command === 'foreColor' || command === 'hiliteColor') {
         setTimeout(restoreSelection, 10);
     }
 }
@@ -140,6 +139,14 @@ function updateButtonStates() {
             btn.style.backgroundColor = document.queryCommandState(cmd) ? "#e2e8f0" : "";
         }
     });
+
+    // Mejora: Estado del resaltador
+    const highlightBtn = document.getElementById('btn-highlight');
+    if (highlightBtn) {
+        const isHighlighted = document.queryCommandValue('hiliteColor') !== 'rgba(0, 0, 0, 0)' 
+                           && document.queryCommandValue('hiliteColor') !== 'transparent';
+        highlightBtn.style.backgroundColor = isHighlighted ? "#ffffb0" : "";
+    }
 }
 
 /* =========================================
@@ -187,6 +194,21 @@ function addSection(label, color) {
     saveData();
     saveHistory(); 
     setTimeout(() => div.querySelector('.editable').focus(), 10);
+}
+
+// MEJORA: AGREGAR BLOQUE DE CITA BÍBLICA
+function addScripture() {
+    const container = document.getElementById('sections-container');
+    const div = document.createElement('div');
+    div.className = 'scripture-block';
+    div.innerHTML = `
+        <span class="editable scripture-text" contenteditable="true" data-placeholder="«Cita bíblica...»" oninput="saveData()"></span>
+        <span class="editable scripture-ref" contenteditable="true" data-placeholder="— Referencia" oninput="saveData()"></span>
+    `;
+    container.appendChild(div);
+    saveData();
+    saveHistory();
+    setTimeout(() => div.querySelector('.scripture-text').focus(), 10);
 }
 
 function addPurpose(type) {
@@ -238,19 +260,41 @@ function addSubPoint() {
 }
 
 /* =========================================
-   LOCAL STORAGE Y PDF (MEJORADO PARA TEXTO COPIABLE)
+   BARRA DE PROGRESO DE PÁGINA
+   ========================================= */
+function updatePageProgress() {
+    const paper = document.getElementById('paper');
+    const bar = document.getElementById('page-progress-bar');
+    const text = document.getElementById('page-progress-text');
+    if (!paper || !bar) return;
+
+    const a4HeightPx = 1122; 
+    const currentHeight = paper.scrollHeight;
+    let percentage = Math.round((currentHeight / a4HeightPx) * 100);
+    
+    bar.style.width = (percentage > 100 ? 100 : percentage) + "%";
+    text.innerText = `Espacio: ${percentage}%`;
+    bar.style.background = percentage > 95 ? "#ef4444" : "linear-gradient(90deg, #004a99, #f1c40f)";
+}
+
+/* =========================================
+   LOCAL STORAGE Y PDF (MEJORADO)
    ========================================= */
 function saveData() {
     const title = document.getElementById('main-title');
+    const author = document.getElementById('author-name'); 
     const container = document.getElementById('sections-container');
     if (!title || !container) return;
+    
     const data = {
         title: title.innerHTML,
+        author: author ? author.innerHTML : "", 
         content: container.innerHTML,
         mCount: mainPointCount,
         sCount: subPointCount
     };
     localStorage.setItem('bosquejo_data_v2', JSON.stringify(data));
+    updatePageProgress(); // Actualizar barra al guardar
 }
 
 window.onload = () => {
@@ -258,11 +302,13 @@ window.onload = () => {
     if (saved) {
         const data = JSON.parse(saved);
         if(document.getElementById('main-title')) document.getElementById('main-title').innerHTML = data.title || "";
+        if(document.getElementById('author-name')) document.getElementById('author-name').innerHTML = data.author || "";
         if(document.getElementById('sections-container')) document.getElementById('sections-container').innerHTML = data.content || "";
         mainPointCount = data.mCount || 0;
         subPointCount = data.sCount || 0;
     }
     initHistorySystem();
+    updatePageProgress();
 };
 
 function clearData() {
@@ -272,21 +318,24 @@ function clearData() {
     }
 }
 
+/* MEJORA PDF: Opciones para texto seleccionable y márgenes para el footer */
 const pdfOptions = {
-    margin: [15, 15, 25, 15], 
+    margin: [10, 10, 20, 10], 
     filename: 'Bosquejo_MMM_Studio.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'jpeg', quality: 1 },
     html2canvas: { 
         scale: 2, 
         useCORS: true, 
-        letterRendering: true, // TRUE para forzar la separación de texto y hacerlo copiable
-        logging: false 
+        letterRendering: true,
+        logging: false,
+        scrollY: 0
     },
     jsPDF: { 
         unit: 'mm', 
         format: 'a4', 
         orientation: 'portrait', 
-        compress: true 
+        compress: true,
+        precision: 16
     }
 };
 
@@ -299,12 +348,12 @@ function applyFooter(pdf) {
     for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setDrawColor(0, 74, 153); 
-        pdf.setLineWidth(0.4);
-        pdf.line(15, pageHeight - 18, pageWidth - 15, pageHeight - 18);
+        pdf.setLineWidth(0.5);
+        pdf.line(10, pageHeight - 18, pageWidth - 10, pageHeight - 18);
         pdf.setFontSize(8);
-        pdf.setTextColor(100);
-        pdf.text('Movimiento Misionero Mundial • ' + fecha, 15, pageHeight - 12);
-        pdf.text('Página ' + i + ' de ' + totalPages, pageWidth - 15, pageHeight - 12, { align: "right" });
+        pdf.setTextColor(120);
+        pdf.text('Movimiento Misionero Mundial • ' + fecha, 10, pageHeight - 12);
+        pdf.text('Página ' + i + ' de ' + totalPages, pageWidth - 10, pageHeight - 12, { align: "right" });
     }
     return pdf;
 }
@@ -357,6 +406,7 @@ function saveHistory() {
         if (undoStack.length > 40) undoStack.shift();
         redoStack = []; 
     }
+    updatePageProgress(); // Sincronizar barra con historial
 }
 
 function historyUndo(e) {
@@ -389,4 +439,19 @@ function initHistorySystem() {
     const observer = new MutationObserver(() => saveHistory());
     observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
     saveHistory();
+}
+// Añade esta función a tu script.js
+function addPageBreak() {
+    const container = document.getElementById('sections-container');
+    const hr = document.createElement('div');
+    hr.className = 'page-break-indicator no-print';
+    hr.innerHTML = '<span>--- SALTO DE PÁGINA (PASA A LA HOJA 2) ---</span>';
+    
+    // El elemento real que html2pdf reconoce para saltar
+    const breaker = document.createElement('div');
+    breaker.className = 'html2pdf__page-break'; 
+    
+    container.appendChild(hr);
+    container.appendChild(breaker);
+    saveData();
 }

@@ -1,16 +1,25 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Bible Studio - Pro</title>
+    <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { 
             --primary-green: #198754; 
             --light-gold: #fff3cd; 
             --dark-gold: #856404;
+            /* MEJORA: Definición de colores por categorías bíblicas */
+            --border-pentateuco: #795548; --bg-pentateuco: #efebe9; /* Marrón */
+            --border-historia: #ff9800; --bg-historia: #fff3e0;    /* Naranja */
+            --border-salmos: #2196f3; --bg-salmos: #e3f2fd;        /* Azul */
+            --border-proverbios: #ffc107; --bg-proverbios: #fff8e1;  /* Dorado */
+            --border-profetas: #f44336; --bg-profetas: #ffe0e0;      /* Rojo */
+            --border-evangelios: #4caf50; --bg-evangelios: #e8f5e9;  /* Verde */
+            --border-cartas: #9c27b0; --bg-cartas: #f3e5f5;        /* Púrpura */
+            --border-apocalipsis: #607d8b; --bg-apocalipsis: #eceff1; /* Gris Azulado */
         }
         
         body { 
@@ -32,7 +41,18 @@
             border-radius: 12px !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             overflow: hidden;
+            transition: all 0.3s ease; /* MEJORA: Transición suave de colores */
         }
+
+        /* MEJORA: Clases para aplicar colores dinámicamente */
+        .tipo-pentateuco { border-left: 8px solid var(--border-pentateuco) !important; background-color: var(--bg-pentateuco) !important; }
+        .tipo-historia { border-left: 8px solid var(--border-historia) !important; background-color: var(--bg-historia) !important; }
+        .tipo-salmos { border-left: 8px solid var(--border-salmos) !important; background-color: var(--bg-salmos) !important; }
+        .tipo-proverbios { border-left: 8px solid var(--border-proverbios) !important; background-color: var(--bg-proverbios) !important; }
+        .tipo-profetas { border-left: 8px solid var(--border-profetas) !important; background-color: var(--bg-profetas) !important; }
+        .tipo-evangelios { border-left: 8px solid var(--border-evangelios) !important; background-color: var(--bg-evangelios) !important; }
+        .tipo-cartas { border-left: 8px solid var(--border-cartas) !important; background-color: var(--bg-cartas) !important; }
+        .tipo-apocalipsis { border-left: 8px solid var(--border-apocalipsis) !important; background-color: var(--bg-apocalipsis) !important; }
 
         /* Cabeceras más táctiles */
         .header-verso { 
@@ -41,14 +61,14 @@
             width: 100%; 
             gap: 12px; 
             padding: 12px; 
-            background: #fff;
+            background: transparent; /* MEJORA: Para heredar el color de la tarjeta */
         }
 
         .input-titulo-punto { 
             flex-grow: 1; 
             border: none; 
             background: transparent; 
-            color: var(--primary-green) !important; 
+            color: #333 !important; /* MEJORA: Color neutro para que resalte con el fondo */
             font-weight: bold; 
             font-size: 1rem;
             width: 100%;
@@ -62,7 +82,7 @@
             line-height: 1.6;
             resize: none;
             border-top: none; border-right: none; border-bottom: none;
-            background-color: #fcfdfc;
+            background-color: rgba(255, 255, 255, 0.7); /* MEJORA: Semitransparente */
         }
 
         /* Alarmas Responsivas */
@@ -128,6 +148,10 @@
             <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                 <li><button class="dropdown-item text-success fw-bold py-2" onclick="agregarVersiculo()">➕ Añadir Versículo</button></li>
                 <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item py-2" onclick="exportarDatos()">💾 Crear Backup (Descargar)</button></li>
+                <li><button class="dropdown-item py-2" onclick="document.getElementById('inputImport').click()">📂 Restaurar (Subir archivo)</button></li>
+                <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarDatos(event)">
+                <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item py-2" href="https://bible.com" target="_blank">📖 Bible.com</a></li>
                 <li><a class="dropdown-item py-2" href="https://www.blueletterbible.org" target="_blank">🔍 Concordancia</a></li>
             </ul>
@@ -138,7 +162,7 @@
 <div class="container-fluid main-container px-3">
     
     <div class="accordion alarm-section mb-4" id="accordionAlarma">
-        <div class="accordion-item">
+        <div class="accordion-item" style="border-left: 8px solid var(--primary-green) !important;">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colapsoAlarma">
                     🔔 Recordatorios <span id="resumenAlarma" class="ms-2 badge bg-success"></span>
@@ -186,18 +210,65 @@ let fontSizeActual = 18;
 let elementoActivo = null;
 let audioPermitido = false;
 
+// MEJORA: Función Backup (Exportar)
+function exportarDatos() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(versos));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "bible_backup_" + new Date().toLocaleDateString() + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+// MEJORA: Función Restaurar (Importar)
+function importarDatos(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importados = JSON.parse(e.target.result);
+            if (Array.isArray(importados)) {
+                if (confirm("Se reemplazarán los versículos actuales. ¿Deseas continuar?")) {
+                    versos = importados;
+                    guardarYRefrescar();
+                }
+            }
+        } catch (err) {
+            alert("Error: El archivo no es válido.");
+        }
+    };
+    reader.readAsText(file);
+}
+
+// MEJORA: Nueva función para identificar categorías de libros
+function getLibroClase(cita) {
+    const t = cita.toLowerCase();
+    if (t.includes('géne') || t.includes('exo') || t.includes('levi') || t.includes('nume') || t.includes('deute')) return 'tipo-pentateuco';
+    if (t.includes('josue') || t.includes('jueces') || t.includes('rut') || t.includes('samuel') || t.includes('reyes') || t.includes('cronicas') || t.includes('esdras') || t.includes('nehe') || t.includes('ester')) return 'tipo-historia';
+    if (t.includes('salmo')) return 'tipo-salmos';
+    if (t.includes('prove') || t.includes('ecle') || t.includes('cantar')) return 'tipo-proverbios';
+    if (t.includes('isai') || t.includes('jere') || t.includes('lamen') || t.includes('ezeq') || t.includes('daniel') || t.includes('oseas') || t.includes('joel') || t.includes('amos') || t.includes('abdi') || t.includes('jonas') || t.includes('mique') || t.includes('nahum') || t.includes('habacu') || t.includes('sofoni') || t.includes('hageo') || t.includes('zacari') || t.includes('malac')) return 'tipo-profetas';
+    if (t.includes('mateo') || t.includes('marcos') || t.includes('lucas') || t.includes('juan')) return 'tipo-evangelios';
+    if (t.includes('hechos') || t.includes('roma') || t.includes('corin') || t.includes('gala') || t.includes('efes') || t.includes('fili') || t.includes('colo') || t.includes('tesa') || t.includes('timo') || t.includes('tito') || t.includes('file') || t.includes('hebre') || t.includes('santi') || t.includes('pedro') || t.includes('juda')) return 'tipo-cartas';
+    if (t.includes('apoca')) return 'tipo-apocalipsis';
+    return '';
+}
+
 function cargarVersos() {
     const contenedor = document.getElementById('contenedorVersos');
     contenedor.innerHTML = "";
     
     versos.forEach((v, index) => {
+        const claseColor = getLibroClase(v.cita); 
         const div = document.createElement('div');
-        div.className = "accordion-item";
+        div.className = `accordion-item ${claseColor}`; 
         div.innerHTML = `
             <div class="header-verso">
                 <button class="btn btn-outline-success border-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#v${index}">📖</button>
                 <input type="text" class="input-titulo-punto" value="${v.cita}" 
-                       oninput="actualizarVerso(${index}, 'cita', this.value)" placeholder="Título o Cita...">
+                       oninput="actualizarVerso(${index}, 'cita', this.value); this.closest('.accordion-item').className = 'accordion-item ' + getLibroClase(this.value)" placeholder="Título o Cita...">
                 <button class="btn btn-light text-danger fw-bold" onclick="borrarVerso(${index})">🗑️</button>
             </div>
             <div id="v${index}" class="accordion-collapse collapse" data-bs-parent="#contenedorVersos">
@@ -307,6 +378,10 @@ function cerrarLectura() {
 function cambiarTamanoLetra(delta) {
     fontSizeActual += delta;
     if (elementoActivo) elementoActivo.style.fontSize = fontSizeActual + "px";
+}
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
 }
 
 setInterval(verificarReloj, 1000);

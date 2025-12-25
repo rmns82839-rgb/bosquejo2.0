@@ -1,4 +1,3 @@
-
 /* =========================================
    VARIABLES GLOBALES Y CONTADORES
    ========================================= */
@@ -85,7 +84,9 @@ if(toolbar) makeDraggable(toolbar);
    ========================================= */
 function saveSelection() {
     const sel = window.getSelection();
-    if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0);
+    if (sel.rangeCount > 0) {
+        savedSelection = sel.getRangeAt(0).cloneRange();
+    }
 }
 
 function restoreSelection() {
@@ -97,21 +98,32 @@ function restoreSelection() {
 }
 
 document.addEventListener("selectionchange", () => {
-    if (document.activeElement && document.activeElement.isContentEditable) saveSelection();
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.isContentEditable) {
+        saveSelection();
+    }
     updateButtonStates();
 });
 
 /* =========================================
-   FORMATO DE TEXTO Y COLOR
+   FORMATO DE TEXTO Y COLOR (MEJORADO)
    ========================================= */
 function execCmd(command, event, value = null) {
-    if (event && event.preventDefault && command !== 'foreColor') event.preventDefault();
+    // Si es color, no prevenimos el default para que el input funcione bien
+    if (event && event.preventDefault && command !== 'foreColor') {
+        event.preventDefault();
+    }
+    
     restoreSelection();
+
     if (command === 'foreColor') {
         const colorPicker = document.getElementById('fontColor');
         value = value || (colorPicker ? colorPicker.value : "#000000");
     }
+
     document.execCommand(command, false, value);
+    
+    // Guardar estado
     updateButtonStates();
     saveData();
     saveHistory(); 
@@ -223,7 +235,7 @@ function addSubPoint() {
 }
 
 /* =========================================
-   LOCAL STORAGE Y PDF (MEJORADO CON PREVIEW)
+   LOCAL STORAGE Y PDF (MEJORADO)
    ========================================= */
 function saveData() {
     const title = document.getElementById('main-title');
@@ -242,8 +254,8 @@ window.onload = () => {
     const saved = localStorage.getItem('bosquejo_data_v2');
     if (saved) {
         const data = JSON.parse(saved);
-        document.getElementById('main-title').innerHTML = data.title || "";
-        document.getElementById('sections-container').innerHTML = data.content || "";
+        if(document.getElementById('main-title')) document.getElementById('main-title').innerHTML = data.title || "";
+        if(document.getElementById('sections-container')) document.getElementById('sections-container').innerHTML = data.content || "";
         mainPointCount = data.mCount || 0;
         subPointCount = data.sCount || 0;
     }
@@ -257,68 +269,54 @@ function clearData() {
     }
 }
 
-// Configuración Maestra del PDF
+// Configuración Maestra del PDF (OPTIMIZADA PARA COPIAR TEXTO)
 const pdfOptions = {
-    margin: [10, 10, 25, 10], 
+    margin: [15, 15, 25, 15], 
     filename: 'Bosquejo_MMM_Studio.pdf',
-    image: { type: 'jpeg', quality: 1 },
+    image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
-        scale: 2.5, // Balance óptimo entre nitidez y peso
+        scale: 2, 
         useCORS: true, 
-        letterRendering: true, 
+        letterRendering: false, // Importante para que el texto sea reconocible
         logging: false 
     },
     jsPDF: { 
         unit: 'mm', 
         format: 'a4', 
         orientation: 'portrait', 
-        compress: true,
-        precision: 12
+        compress: true 
     }
 };
 
-// Función para decorar el PDF con el footer oficial
 function applyFooter(pdf) {
     const totalPages = pdf.internal.getNumberOfPages();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const fecha = new Date().toLocaleDateString();
-    let orgName = "Movimiento Misionero Mundial"; 
 
     for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setDrawColor(0, 74, 153); 
         pdf.setLineWidth(0.4);
-        pdf.line(10, pageHeight - 18, pageWidth - 10, pageHeight - 18);
-
+        pdf.line(15, pageHeight - 18, pageWidth - 15, pageHeight - 18);
         pdf.setFontSize(8);
         pdf.setTextColor(100);
-        pdf.text(orgName + ' • ' + fecha, 10, pageHeight - 12);
-        
-        pdf.setFont("helvetica", "italic");
-        pdf.text('MMM Studio Edition 2025', pageWidth / 2, pageHeight - 12, { align: "center" });
-        
-        pdf.setFont("helvetica", "normal");
-        pdf.text('Página ' + i + ' de ' + totalPages, pageWidth - 10, pageHeight - 12, { align: "right" });
-
-        pdf.setFontSize(7);
-        pdf.setTextColor(150);
-        pdf.text('"Tu palabra es una lámpara a mis pies..." Salmo 119:105', pageWidth / 2, pageHeight - 8, { align: "center" });
+        pdf.text('Movimiento Misionero Mundial • ' + fecha, 15, pageHeight - 12);
+        pdf.text('Página ' + i + ' de ' + totalPages, pageWidth - 15, pageHeight - 12, { align: "right" });
     }
     return pdf;
 }
 
-// FUNCIÓN PRINCIPAL: GENERAR PDF
 function generatePDF() {
     const element = document.getElementById('paper');
     showLoading(true);
+    // Usamos el flujo de html2pdf pero asegurando el renderizado de texto
     html2pdf().set(pdfOptions).from(element).toPdf().get('pdf').then(function (pdf) {
         applyFooter(pdf).save();
         showLoading(false);
     });
 }
 
-// FUNCIÓN: VISTA PREVIA
 function previewPDF() {
     const element = document.getElementById('paper');
     showLoading(true);
@@ -330,13 +328,12 @@ function previewPDF() {
     });
 }
 
-// UTILIDAD: Indicador de carga
 function showLoading(status) {
     let loader = document.getElementById('pdf-loader');
     if (!loader) {
         loader = document.createElement('div');
         loader.id = 'pdf-loader';
-        loader.innerHTML = '<div style="position:fixed; top:20px; right:20px; background:#004a99; color:white; padding:10px 20px; border-radius:50px; font-family:sans-serif; z-index:9999; box-shadow:0 4px 15px rgba(0,0,0,0.2);">Generando PDF...</div>';
+        loader.innerHTML = '<div style="position:fixed; top:20px; right:20px; background:#004a99; color:white; padding:10px 20px; border-radius:50px; font-family:sans-serif; z-index:9999; box-shadow:0 4px 15px rgba(0,0,0,0.2);">Generando documento...</div>';
         document.body.appendChild(loader);
     }
     loader.style.display = status ? 'block' : 'none';

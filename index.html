@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -28,6 +29,25 @@
             border: 1px solid var(--amarillo-mmm);
         }
         .btn-success { background-color: #27ae60 !important; }
+
+        /* NUEVOS ESTILOS INTEGRADOS */
+        .btn-preview { background-color: #f39c12 !important; color: white !important; }
+        .btn-bible { background-color: #34495e !important; color: white !important; }
+        
+        #pdf-loader {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--azul-mmm);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: sans-serif;
+            z-index: 10000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 1px solid var(--amarillo-mmm);
+        }
 
         /* Estilo para los selects del ala izquierda */
         .sidebar-select {
@@ -71,6 +91,8 @@
 </head>
 <body>
 
+    <div id="pdf-loader">Procesando documento...</div>
+
     <div id="floating-toolbar">
         <div class="side-tab left-tab" onclick="toggleRibbon('left')">🖋️</div>
         <div id="left-ribbon" class="ribbon hidden">
@@ -100,6 +122,7 @@
                 
                 <select onchange="handleStudySelect(this)" class="sidebar-select">
                     <option value="">📚 Estudio</option>
+                    <option value="https://bible.com/bible">📖 Biblia (YouVersion)</option>
                     <option value="notas.html">📝 Mis Notas</option>
                     <option value="glosario.html">📖 Glosario Técnico</option>
                     <option value="versículos.html">📑 Mis Versículos</option>
@@ -131,6 +154,7 @@
                 <button onclick="addSection('Conclusión', '#e74c3c')">🏁 Conclusión</button>
                 <button onclick="addSection('Glosario Final', '#16a085')">📚 Glosario</button>
                 <div class="divider"></div>
+                <button onclick="previewPDF()" class="btn-preview">👁️ Vista</button>
                 <button onclick="generatePDF()" class="btn-success">PDF</button>
                 <button onclick="clearData()" class="btn-danger">🗑️ Limpiar</button>
             </div>
@@ -269,6 +293,11 @@
                 } catch(err) { alert("Archivo inválido."); }
             };
             reader.readAsText(file);
+        }
+
+        // Funciones auxiliares para el feedback visual del PDF
+        function showLoading(show) {
+            document.getElementById('pdf-loader').style.display = show ? 'block' : 'none';
         }
 
         window.onload = () => { updateSermonList(); loadSermon(); };

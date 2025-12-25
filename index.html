@@ -8,14 +8,40 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Ajuste específico para el logo solicitado */
+        :root { 
+            --azul-mmm: #004a99; 
+            --amarillo-mmm: #f1c40f;
+        }
+        
+        /* Colores de herramientas */
+        .side-tab, #hammer-icon { 
+            background-color: var(--azul-mmm) !important; 
+            color: var(--amarillo-mmm) !important;
+            border: 1px solid var(--amarillo-mmm);
+        }
+        .btn-success { background-color: #27ae60 !important; }
+
+        /* Estilo para los selects del ala izquierda */
+        .sidebar-select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 2px solid var(--azul-mmm);
+            font-weight: bold;
+            color: var(--azul-mmm);
+            background: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
         #watermark img, .mini-logo {
             border: none !important;
             box-shadow: none !important;
             outline: none !important;
             background: transparent !important;
         }
-        /* Estilo para los nuevos botones de deshacer/rehacer */
+
         .btn-history {
             font-size: 1.2rem;
             color: #2c3e50;
@@ -23,25 +49,35 @@
             border: none;
             cursor: pointer;
             padding: 5px;
-            transition: 0.2s;
         }
-        .btn-history:active { transform: scale(0.8); }
-
-        /* Estilo para el input de importación oculto */
+        
         #inputImport { display: none; }
+
+        #paper {
+            padding: 40px 20px !important;
+            margin: 10px auto !important;
+            width: 95% !important;
+            max-width: 800px;
+        }
     </style>
 </head>
 <body>
+
     <div id="floating-toolbar">
         <div class="side-tab left-tab" onclick="toggleRibbon('left')">🖋️</div>
-        
         <div id="left-ribbon" class="ribbon hidden">
             <div class="scroll-container">
+                
+                <select id="sermon-selector" class="sidebar-select" onchange="handleSermonSelect(this)">
+                    </select>
+
+                <div class="divider"></div>
+
                 <button type="button" class="btn-history" title="Deshacer" onmousedown="historyUndo(event)">⟲</button>
                 <button type="button" class="btn-history" title="Rehacer" onmousedown="historyRedo(event)">⟳</button>
                 
                 <div class="divider"></div>
-
+                
                 <button type="button" id="btn-bold" onmousedown="execCmd('bold', event)"><b>B</b></button>
                 <button type="button" id="btn-italic" onmousedown="execCmd('italic', event)"><i>I</i></button>
                 <button type="button" id="btn-underline" onmousedown="execCmd('underline', event)"><u>U</u></button>
@@ -51,10 +87,10 @@
                 <div class="color-picker-container">
                     <input type="color" id="fontColor" oninput="execCmd('foreColor', event, this.value)" title="Color de letra">
                 </div>
-
+                
                 <div class="divider"></div>
-
-                <select onchange="handleStudySelect(this)" class="study-select">
+                
+                <select onchange="handleStudySelect(this)" class="sidebar-select">
                     <option value="">📚 Estudio</option>
                     <option value="notas.html">📝 Mis Notas</option>
                     <option value="glosario.html">📖 Glosario Técnico</option>
@@ -62,8 +98,6 @@
                     <option value="EXPORT">💾 Guardar Backup (Mes)</option>
                     <option value="IMPORT">📂 Restaurar Backup</option>
                     <option value="https://diccionariobiblico.net/">📖 Diccionario Bíblico</option>
-                    <option value="https://www.blueletterbible.org/">Blue Letter</option>
-                    <option value="https://www.biblegateway.com/">Bible Gateway</option>
                 </select>
                 <input type="file" id="inputImport" accept=".json" onchange="importarDatosMes(event)">
             </div>
@@ -75,43 +109,34 @@
             <div class="scroll-container">
                 <button onclick="addSection('Texto Bíblico', '#f1c40f')">📖 Texto</button>
                 <button onclick="addSection('Tema / Título', '#3498db')">🏷️ Tema</button>
-                
                 <select onchange="addPurpose(this.value); this.value='';" class="purpose-select">
-                    <option value="">🎯 Elegir Propósito</option>
+                    <option value="">🎯 Propósito</option>
                     <option value="Evangelístico">Evangelístico</option>
-                    <option value="Aliento (Consuelo)">Aliento (Consuelo)</option>
-                    <option value="Doctrinal (Didáctico)">Doctrinal (Didáctico)</option>
+                    <option value="Aliento (Consuelo)">Aliento</option>
+                    <option value="Doctrinal (Didáctico)">Doctrinal</option>
                     <option value="Devocional">Devocional</option>
                     <option value="Consagración">Consagración</option>
-                    <option value="Ético-Moral">Ético-Moral</option>
                 </select>
-
                 <button onclick="addSection('Introducción', '#34495e')">🎤 Intro</button>
                 <button onclick="addMainPoint()">Ⅰ Punto</button>
                 <button onclick="addSubPoint()">Ⓐ Sub</button>
                 <button onclick="addSection('Conclusión', '#e74c3c')">🏁 Conclusión</button>
-                <button onclick="addSection('Glosario Final', '#16a085')">📚 Glosario Final</button>
-
+                <button onclick="addSection('Glosario Final', '#16a085')">📚 Glosario</button>
                 <div class="divider"></div>
-
                 <button onclick="generatePDF()" class="btn-success">PDF</button>
-                <button onclick="clearData()" class="btn-danger">🗑️</button>
+                <button onclick="clearData()" class="btn-danger">🗑️ Limpiar</button>
             </div>
         </div>
-
         <div class="side-tab right-tab" onclick="toggleRibbon('right')">📋</div>
     </div>
-
+    
     <div id="document-area">
         <div id="paper">
             <div id="watermark">
                 <img src="logo.png" alt="Logo">
             </div>
-
-            <h1 contenteditable="true" id="main-title" class="placeholder" data-placeholder="TÍTULO DEL SERMÓN" oninput="saveData()"></h1>
-            
+            <h1 contenteditable="true" id="main-title" class="placeholder" data-placeholder="TÍTULO DEL SERMÓN" oninput="saveCurrentWork()"></h1>
             <div id="sections-container"></div>
-
             <footer id="sermon-footer">
                 <div class="footer-content">
                     <p class="verse">"Tu palabra es una lámpara a mis pies y una luz en mi camino."</p>
@@ -124,67 +149,116 @@
             </footer>
         </div>
     </div>
-
+    
     <script src="script.js"></script>
     <script>
-        // Lógica para manejar las opciones especiales del menú de estudio
-        function handleStudySelect(select) {
+        let allSermons = JSON.parse(localStorage.getItem('mmm_sermon_collection')) || { "Principal": { title: "", content: "" } };
+        let activeSermonId = localStorage.getItem('mmm_active_id') || "Principal";
+
+        // Función con la misma lógica que el select de Estudio
+        function handleSermonSelect(select) {
             const val = select.value;
             if (!val) return;
 
-            if (val === "EXPORT") {
-                exportarDatosMes();
-            } else if (val === "IMPORT") {
-                document.getElementById('inputImport').click();
-            } else if (val.includes('http')) {
-                window.open(val, '_blank');
+            if (val === "NEW_SERMON") {
+                const name = prompt("Nombre del nuevo bosquejo:");
+                if (name && !allSermons[name]) {
+                    allSermons[name] = { title: "", content: "" };
+                    activeSermonId = name;
+                    saveToStorage(); loadSermon(); updateSermonList();
+                }
+            } else if (val === "DELETE_ACTIVE") {
+                if (confirm(`¿Borrar definitivamente "${activeSermonId}"?`)) {
+                    delete allSermons[activeSermonId];
+                    activeSermonId = Object.keys(allSermons)[0] || "Principal";
+                    if (!allSermons["Principal"]) allSermons["Principal"] = { title: "", content: "" };
+                    saveToStorage(); loadSermon(); updateSermonList();
+                }
             } else {
-                window.location.href = val;
+                // Cambiar de bosquejo
+                saveCurrentWork();
+                activeSermonId = val;
+                localStorage.setItem('mmm_active_id', val);
+                loadSermon();
             }
-            select.value = ""; // Resetear select
         }
 
-        // Función para exportar el bosquejo actual (Backup mensual)
+        function updateSermonList() {
+            const selector = document.getElementById('sermon-selector');
+            selector.innerHTML = `<option value="">📂 Cambiar Bosquejo</option>`;
+            
+            // Añadir opciones de gestión
+            selector.innerHTML += `<option value="NEW_SERMON">➕ Crear Nuevo...</option>`;
+            selector.innerHTML += `<option value="DELETE_ACTIVE">❌ Borrar Actual</option>`;
+            selector.innerHTML += `<hr>`;
+
+            // Listar los bosquejos guardados
+            for (let id in allSermons) {
+                let opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = (id === activeSermonId ? "📍 " : "📄 ") + id;
+                if (id === activeSermonId) opt.selected = true;
+                selector.appendChild(opt);
+            }
+        }
+
+        function loadSermon() {
+            const data = allSermons[activeSermonId];
+            document.getElementById('main-title').innerText = data.title || "";
+            document.getElementById('sections-container').innerHTML = data.content || "";
+            if (typeof saveData === "function") saveData();
+        }
+
+        function saveCurrentWork() {
+            allSermons[activeSermonId].title = document.getElementById('main-title').innerText;
+            allSermons[activeSermonId].content = document.getElementById('sections-container').innerHTML;
+            saveToStorage();
+            if (typeof saveData === "function") saveData();
+        }
+
+        // Auto-guardado al escribir
+        document.getElementById('sections-container').addEventListener('input', saveCurrentWork);
+        document.getElementById('main-title').addEventListener('input', saveCurrentWork);
+
+        function saveToStorage() {
+            localStorage.setItem('mmm_sermon_collection', JSON.stringify(allSermons));
+            localStorage.setItem('mmm_active_id', activeSermonId);
+        }
+
+        function handleStudySelect(select) {
+            const val = select.value;
+            if (!val) return;
+            if (val === "EXPORT") exportarDatosMes();
+            else if (val === "IMPORT") document.getElementById('inputImport').click();
+            else if (val.includes('http')) window.open(val, '_blank');
+            else window.location.href = val;
+            select.value = "";
+        }
+
         function exportarDatosMes() {
-            const titulo = document.getElementById('main-title').innerText || 'bosquejo';
-            const datos = {
-                titulo: titulo,
-                contenido: document.getElementById('sections-container').innerHTML,
-                fecha: new Date().toLocaleDateString()
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(datos));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allSermons));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `Bosquejo_${titulo.replace(/\s+/g, '_')}.json`);
+            dlAnchor.setAttribute("download", `Backup_Sermones_MMM.json`);
             dlAnchor.click();
         }
 
-        // Función para restaurar un bosquejo guardado
         function importarDatosMes(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const data = JSON.parse(e.target.result);
-                    if (confirm("¿Restaurar este bosquejo? Se perderá lo que no hayas guardado.")) {
-                        document.getElementById('main-title').innerText = data.titulo || "";
-                        document.getElementById('sections-container').innerHTML = data.contenido || "";
-                        // Llamar a saveData() si existe en tu script.js para que persista en el navegador
-                        if (typeof saveData === "function") saveData();
-                        alert("¡Bosquejo restaurado con éxito!");
-                    }
-                } catch (err) {
-                    alert("Error: El archivo no es válido.");
-                }
+                    allSermons = JSON.parse(e.target.result);
+                    activeSermonId = Object.keys(allSermons)[0];
+                    saveToStorage(); loadSermon(); updateSermonList();
+                    alert("Importación exitosa.");
+                } catch(err) { alert("Archivo inválido."); }
             };
             reader.readAsText(file);
         }
 
-        // Registro de Service Worker para App
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-        }
+        window.onload = () => { updateSermonList(); loadSermon(); };
     </script>
 </body>
 </html>

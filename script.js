@@ -80,7 +80,7 @@ function applyMagneticEffect(el) {
 if(toolbar) makeDraggable(toolbar);
 
 /* =========================================
-   GESTIÓN DE SELECCIÓN
+   GESTIÓN DE SELECCIÓN (MEJORADA)
    ========================================= */
 function saveSelection() {
     const sel = window.getSelection();
@@ -99,7 +99,7 @@ function restoreSelection() {
 
 document.addEventListener("selectionchange", () => {
     const activeEl = document.activeElement;
-    if (activeEl && activeEl.isContentEditable) {
+    if (activeEl && (activeEl.isContentEditable || activeEl.closest('[contenteditable="true"]'))) {
         saveSelection();
     }
     updateButtonStates();
@@ -109,7 +109,6 @@ document.addEventListener("selectionchange", () => {
    FORMATO DE TEXTO Y COLOR (MEJORADO)
    ========================================= */
 function execCmd(command, event, value = null) {
-    // Si es color, no prevenimos el default para que el input funcione bien
     if (event && event.preventDefault && command !== 'foreColor') {
         event.preventDefault();
     }
@@ -123,10 +122,14 @@ function execCmd(command, event, value = null) {
 
     document.execCommand(command, false, value);
     
-    // Guardar estado
     updateButtonStates();
     saveData();
     saveHistory(); 
+    
+    // Devolver el foco al papel después de aplicar color
+    if (command === 'foreColor') {
+        setTimeout(restoreSelection, 10);
+    }
 }
 
 function updateButtonStates() {
@@ -235,7 +238,7 @@ function addSubPoint() {
 }
 
 /* =========================================
-   LOCAL STORAGE Y PDF (MEJORADO)
+   LOCAL STORAGE Y PDF (MEJORADO PARA TEXTO COPIABLE)
    ========================================= */
 function saveData() {
     const title = document.getElementById('main-title');
@@ -269,7 +272,6 @@ function clearData() {
     }
 }
 
-// Configuración Maestra del PDF (OPTIMIZADA PARA COPIAR TEXTO)
 const pdfOptions = {
     margin: [15, 15, 25, 15], 
     filename: 'Bosquejo_MMM_Studio.pdf',
@@ -277,7 +279,7 @@ const pdfOptions = {
     html2canvas: { 
         scale: 2, 
         useCORS: true, 
-        letterRendering: false, // Importante para que el texto sea reconocible
+        letterRendering: true, // TRUE para forzar la separación de texto y hacerlo copiable
         logging: false 
     },
     jsPDF: { 
@@ -310,7 +312,6 @@ function applyFooter(pdf) {
 function generatePDF() {
     const element = document.getElementById('paper');
     showLoading(true);
-    // Usamos el flujo de html2pdf pero asegurando el renderizado de texto
     html2pdf().set(pdfOptions).from(element).toPdf().get('pdf').then(function (pdf) {
         applyFooter(pdf).save();
         showLoading(false);

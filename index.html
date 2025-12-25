@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mi Bosquejo - Studio Edition</title>
+    
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#004a99">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sermones MMM">
+    <link rel="apple-touch-icon" href="logo.png">
+    
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -152,10 +160,20 @@
     
     <script src="script.js"></script>
     <script>
+        // REGISTRO DEL SERVICE WORKER (Necesario para que el manifest funcione)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('Service Worker registrado', reg);
+                }).catch(err => {
+                    console.log('Error al registrar Service Worker', err);
+                });
+            });
+        }
+
         let allSermons = JSON.parse(localStorage.getItem('mmm_sermon_collection')) || { "Principal": { title: "", content: "" } };
         let activeSermonId = localStorage.getItem('mmm_active_id') || "Principal";
 
-        // Función con la misma lógica que el select de Estudio
         function handleSermonSelect(select) {
             const val = select.value;
             if (!val) return;
@@ -175,7 +193,6 @@
                     saveToStorage(); loadSermon(); updateSermonList();
                 }
             } else {
-                // Cambiar de bosquejo
                 saveCurrentWork();
                 activeSermonId = val;
                 localStorage.setItem('mmm_active_id', val);
@@ -186,13 +203,10 @@
         function updateSermonList() {
             const selector = document.getElementById('sermon-selector');
             selector.innerHTML = `<option value="">📂 Cambiar Bosquejo</option>`;
-            
-            // Añadir opciones de gestión
             selector.innerHTML += `<option value="NEW_SERMON">➕ Crear Nuevo...</option>`;
             selector.innerHTML += `<option value="DELETE_ACTIVE">❌ Borrar Actual</option>`;
             selector.innerHTML += `<hr>`;
 
-            // Listar los bosquejos guardados
             for (let id in allSermons) {
                 let opt = document.createElement('option');
                 opt.value = id;
@@ -216,7 +230,6 @@
             if (typeof saveData === "function") saveData();
         }
 
-        // Auto-guardado al escribir
         document.getElementById('sections-container').addEventListener('input', saveCurrentWork);
         document.getElementById('main-title').addEventListener('input', saveCurrentWork);
 

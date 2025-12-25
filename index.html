@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,15 +21,12 @@
             --amarillo-mmm: #f1c40f;
         }
         
-        /* Colores de herramientas */
         .side-tab, #hammer-icon { 
             background-color: var(--azul-mmm) !important; 
             color: var(--amarillo-mmm) !important;
             border: 1px solid var(--amarillo-mmm);
         }
         .btn-success { background-color: #27ae60 !important; }
-
-        /* NUEVOS ESTILOS INTEGRADOS */
         .btn-preview { background-color: #f39c12 !important; color: white !important; }
         .btn-bible { background-color: #34495e !important; color: white !important; }
         
@@ -48,8 +44,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             border: 1px solid var(--amarillo-mmm);
         }
-
-        /* Estilo para los selects del ala izquierda */
         .sidebar-select {
             width: 100%;
             padding: 8px;
@@ -62,14 +56,12 @@
             font-size: 0.85rem;
             cursor: pointer;
         }
-
         #watermark img, .mini-logo {
             border: none !important;
             box-shadow: none !important;
             outline: none !important;
             background: transparent !important;
         }
-
         .btn-history {
             font-size: 1.2rem;
             color: #2c3e50;
@@ -80,46 +72,89 @@
         }
         
         #inputImport { display: none; }
-
         #paper {
             padding: 40px 20px !important;
             margin: 10px auto !important;
             width: 95% !important;
             max-width: 800px;
+            background-color: white;
+        }
+
+        /* MEJORA: Estilo para el autor con Placeholder */
+        #author-container {
+            margin-top: 10px;
+            color: #555;
+            display: none; 
+            font-size: 1.1rem;
+        }
+        .author-label { font-weight: bold; color: var(--azul-mmm); }
+        
+        /* Efecto Placeholder para el autor */
+        #author-name:empty:before {
+            content: attr(data-placeholder);
+            color: #aaa;
+            font-style: italic;
+            cursor: text;
+        }
+
+        /* BARRA DE PROGRESO STUDIO */
+        #page-progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #e2e8f0;
+            z-index: 10000;
+        }
+        #page-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            transition: width 0.3s ease;
+        }
+        #page-progress-text {
+            position: fixed;
+            top: 8px;
+            right: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
+
 </head>
 <body>
 
-    <div id="pdf-loader">Procesando documento...</div>
+    <div id="page-progress-container" class="no-print">
+        <div id="page-progress-bar"></div>
+        <span id="page-progress-text">Espacio: 0%</span>
+    </div>
 
+    <div id="pdf-loader">Generando PDF seleccionable...</div>
+    
     <div id="floating-toolbar">
         <div class="side-tab left-tab" onclick="toggleRibbon('left')">🖋️</div>
+        
         <div id="left-ribbon" class="ribbon hidden">
             <div class="scroll-container">
-                
-                <select id="sermon-selector" class="sidebar-select" onchange="handleSermonSelect(this)">
-                    </select>
-
+                <select id="sermon-selector" class="sidebar-select" onchange="handleSermonSelect(this)"></select>
                 <div class="divider"></div>
-
                 <button type="button" class="btn-history" title="Deshacer" onmousedown="historyUndo(event)">⟲</button>
                 <button type="button" class="btn-history" title="Rehacer" onmousedown="historyRedo(event)">⟳</button>
-                
                 <div class="divider"></div>
-                
                 <button type="button" id="btn-bold" onmousedown="execCmd('bold', event)"><b>B</b></button>
                 <button type="button" id="btn-italic" onmousedown="execCmd('italic', event)"><i>I</i></button>
                 <button type="button" id="btn-underline" onmousedown="execCmd('underline', event)"><u>U</u></button>
                 
+                <button type="button" id="btn-highlight" onmousedown="execCmd('hiliteColor', event, '#ffffb0')">🖍️</button>
                 <div class="divider"></div>
-                
                 <div class="color-picker-container">
                     <input type="color" id="fontColor" oninput="execCmd('foreColor', event, this.value)" title="Color de letra">
                 </div>
-                
                 <div class="divider"></div>
-                
                 <select onchange="handleStudySelect(this)" class="sidebar-select">
                     <option value="">📚 Estudio</option>
                     <option value="https://bible.com/bible">📖 Biblia (YouVersion)</option>
@@ -140,6 +175,8 @@
             <div class="scroll-container">
                 <button onclick="addSection('Texto Bíblico', '#f1c40f')">📖 Texto</button>
                 <button onclick="addSection('Tema / Título', '#3498db')">🏷️ Tema</button>
+                <button onclick="toggleAuthorField()">👤 Autor</button> 
+                <button onclick="addScripture()" style="border: 1.5px solid #3b82f6;">📖 Cita</button>
                 <select onchange="addPurpose(this.value); this.value='';" class="purpose-select">
                     <option value="">🎯 Propósito</option>
                     <option value="Evangelístico">Evangelístico</option>
@@ -151,6 +188,7 @@
                 <button onclick="addSection('Introducción', '#34495e')">🎤 Intro</button>
                 <button onclick="addMainPoint()">Ⅰ Punto</button>
                 <button onclick="addSubPoint()">Ⓐ Sub</button>
+                <button onclick="addPageBreak()" style="background: #f1f5f9; border: 1px dashed #3b82f6;">✂️ Salto Hoja</button>
                 <button onclick="addSection('Conclusión', '#e74c3c')">🏁 Conclusión</button>
                 <button onclick="addSection('Glosario Final', '#16a085')">📚 Glosario</button>
                 <div class="divider"></div>
@@ -161,14 +199,21 @@
         </div>
         <div class="side-tab right-tab" onclick="toggleRibbon('right')">📋</div>
     </div>
-    
+
     <div id="document-area">
         <div id="paper">
             <div id="watermark">
                 <img src="logo.png" alt="Logo">
             </div>
             <h1 contenteditable="true" id="main-title" class="placeholder" data-placeholder="TÍTULO DEL SERMÓN" oninput="saveCurrentWork()"></h1>
+            
+            <div id="author-container">
+                <span class="author-label">Realizado por:</span> 
+                <span contenteditable="true" id="author-name" data-placeholder="Escriba el nombre aquí..." oninput="saveCurrentWork()"></span>
+            </div>
+
             <div id="sections-container"></div>
+            
             <footer id="sermon-footer">
                 <div class="footer-content">
                     <p class="verse">"Tu palabra es una lámpara a mis pies y una luz en mi camino."</p>
@@ -181,31 +226,28 @@
             </footer>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
     <script>
-        // REGISTRO DEL SERVICE WORKER (Necesario para que el manifest funcione)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('Service Worker registrado', reg);
-                }).catch(err => {
-                    console.log('Error al registrar Service Worker', err);
-                });
-            });
-        }
-
-        let allSermons = JSON.parse(localStorage.getItem('mmm_sermon_collection')) || { "Principal": { title: "", content: "" } };
+        // --- LÓGICA DE PERSISTENCIA ---
+        let allSermons = JSON.parse(localStorage.getItem('mmm_sermon_collection')) || { "Principal": { title: "", author: "", content: "" } };
         let activeSermonId = localStorage.getItem('mmm_active_id') || "Principal";
+
+        function toggleAuthorField() {
+            const container = document.getElementById('author-container');
+            const isHidden = container.style.display === 'none' || container.style.display === '';
+            container.style.display = isHidden ? 'block' : 'none';
+            if(isHidden) document.getElementById('author-name').focus();
+            saveCurrentWork();
+        }
 
         function handleSermonSelect(select) {
             const val = select.value;
             if (!val) return;
-
             if (val === "NEW_SERMON") {
                 const name = prompt("Nombre del nuevo bosquejo:");
                 if (name && !allSermons[name]) {
-                    allSermons[name] = { title: "", content: "" };
+                    allSermons[name] = { title: "", author: "", content: "" };
                     activeSermonId = name;
                     saveToStorage(); loadSermon(); updateSermonList();
                 }
@@ -213,7 +255,7 @@
                 if (confirm(`¿Borrar definitivamente "${activeSermonId}"?`)) {
                     delete allSermons[activeSermonId];
                     activeSermonId = Object.keys(allSermons)[0] || "Principal";
-                    if (!allSermons["Principal"]) allSermons["Principal"] = { title: "", content: "" };
+                    if (!allSermons["Principal"]) allSermons["Principal"] = { title: "", author: "", content: "" };
                     saveToStorage(); loadSermon(); updateSermonList();
                 }
             } else {
@@ -226,11 +268,11 @@
 
         function updateSermonList() {
             const selector = document.getElementById('sermon-selector');
+            if(!selector) return;
             selector.innerHTML = `<option value="">📂 Cambiar Bosquejo</option>`;
             selector.innerHTML += `<option value="NEW_SERMON">➕ Crear Nuevo...</option>`;
             selector.innerHTML += `<option value="DELETE_ACTIVE">❌ Borrar Actual</option>`;
             selector.innerHTML += `<hr>`;
-
             for (let id in allSermons) {
                 let opt = document.createElement('option');
                 opt.value = id;
@@ -243,19 +285,45 @@
         function loadSermon() {
             const data = allSermons[activeSermonId];
             document.getElementById('main-title').innerText = data.title || "";
+            document.getElementById('author-name').innerText = data.author || "";
             document.getElementById('sections-container').innerHTML = data.content || "";
+            
+            if (data.author && data.author !== "") {
+                document.getElementById('author-container').style.display = 'block';
+            } else {
+                document.getElementById('author-container').style.display = 'none';
+            }
+            updatePageProgress(); // Actualizar barra al cargar
             if (typeof saveData === "function") saveData();
         }
 
         function saveCurrentWork() {
+            if(!allSermons[activeSermonId]) allSermons[activeSermonId] = {};
             allSermons[activeSermonId].title = document.getElementById('main-title').innerText;
+            allSermons[activeSermonId].author = document.getElementById('author-name').innerText;
             allSermons[activeSermonId].content = document.getElementById('sections-container').innerHTML;
             saveToStorage();
+            updatePageProgress(); // Actualizar barra al escribir
             if (typeof saveData === "function") saveData();
+        }
+
+        // --- BARRA DE PROGRESO ---
+        function updatePageProgress() {
+            const paper = document.getElementById('paper');
+            const bar = document.getElementById('page-progress-bar');
+            const text = document.getElementById('page-progress-text');
+            if (!paper || !bar) return;
+            const a4HeightPx = 1122; 
+            const currentHeight = paper.scrollHeight;
+            let percentage = Math.round((currentHeight / a4HeightPx) * 100);
+            bar.style.width = (percentage > 100 ? 100 : percentage) + "%";
+            text.innerText = `Espacio: ${percentage}%`;
+            bar.style.background = percentage > 95 ? "#ef4444" : "linear-gradient(90deg, #3b82f6, #10b981)";
         }
 
         document.getElementById('sections-container').addEventListener('input', saveCurrentWork);
         document.getElementById('main-title').addEventListener('input', saveCurrentWork);
+        document.getElementById('author-name').addEventListener('input', saveCurrentWork);
 
         function saveToStorage() {
             localStorage.setItem('mmm_sermon_collection', JSON.stringify(allSermons));
@@ -275,8 +343,9 @@
         function exportarDatosMes() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allSermons));
             const dlAnchor = document.createElement('a');
+            const title = document.getElementById('main-title').innerText || "Sermones";
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `Backup_Sermones_MMM.json`);
+            dlAnchor.setAttribute("download", `Backup_${title}_MMM.json`);
             dlAnchor.click();
         }
 
@@ -295,12 +364,18 @@
             reader.readAsText(file);
         }
 
-        // Funciones auxiliares para el feedback visual del PDF
         function showLoading(show) {
-            document.getElementById('pdf-loader').style.display = show ? 'block' : 'none';
+            const loader = document.getElementById('pdf-loader');
+            if(loader) loader.style.display = show ? 'block' : 'none';
         }
 
         window.onload = () => { updateSermonList(); loadSermon(); };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
+            });
+        }
     </script>
 </body>
 </html>

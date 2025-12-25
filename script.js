@@ -1,3 +1,4 @@
+
 /* =========================================
    VARIABLES GLOBALES Y CONTADORES
    ========================================= */
@@ -124,12 +125,23 @@ function execCmd(command, event, value = null) {
     
     updateButtonStates();
     saveData();
-    // MEJORA: Forzamos guardado de historial tras un cambio de formato
+    // MEJORA: Guardado instantáneo para que el botón "Deshacer" funcione con el formato
     saveHistory(); 
     
     if (command === 'foreColor' || command === 'hiliteColor') {
         setTimeout(restoreSelection, 10);
     }
+}
+
+// NUEVA MEJORA: Limpiar formato del texto seleccionado
+function clearFormatting(event) {
+    if (event) event.preventDefault();
+    restoreSelection();
+    document.execCommand('removeFormat', false, null);
+    // También quitamos colores de fondo manualmente si los hay
+    document.execCommand('hiliteColor', false, 'transparent');
+    saveData();
+    saveHistory();
 }
 
 function updateButtonStates() {
@@ -147,6 +159,15 @@ function updateButtonStates() {
                            && document.queryCommandValue('hiliteColor') !== 'transparent';
         highlightBtn.style.backgroundColor = isHighlighted ? "#ffffb0" : "";
     }
+}
+
+/* =========================================
+   SISTEMA NOCTURNO (MODO OSCURO)
+   ========================================= */
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('studio_dark_mode', isDark);
 }
 
 /* =========================================
@@ -293,7 +314,7 @@ function saveData() {
         sCount: subPointCount
     };
     localStorage.setItem('bosquejo_data_v2', JSON.stringify(data));
-    updatePageProgress();
+    updatePageProgress(); 
 }
 
 window.onload = () => {
@@ -306,6 +327,12 @@ window.onload = () => {
         mainPointCount = data.mCount || 0;
         subPointCount = data.sCount || 0;
     }
+    
+    // Cargar preferencia de modo oscuro
+    if (localStorage.getItem('studio_dark_mode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+
     initHistorySystem();
     updatePageProgress();
 };
@@ -345,11 +372,31 @@ function applyFooter(pdf) {
 }
 
 function generatePDF() {
+    // IMPORTANTE: Quitar modo oscuro antes de exportar
+    const wasDark = document.body.classList.contains('dark-mode');
+    if(wasDark) document.body.classList.remove('dark-mode');
+
     const element = document.getElementById('paper');
     showLoading(true);
     html2pdf().set(pdfOptions).from(element).toPdf().get('pdf').then(function (pdf) {
         applyFooter(pdf).save();
         showLoading(false);
+        if(wasDark) document.body.classList.add('dark-mode'); // Restaurar
+    });
+}
+
+function previewPDF() {
+    const wasDark = document.body.classList.contains('dark-mode');
+    if(wasDark) document.body.classList.remove('dark-mode');
+
+    const element = document.getElementById('paper');
+    showLoading(true);
+    html2pdf().set(pdfOptions).from(element).toPdf().get('pdf').then(function (pdf) {
+        applyFooter(pdf);
+        const blob = pdf.output('bloburl');
+        window.open(blob, '_blank');
+        showLoading(false);
+        if(wasDark) document.body.classList.add('dark-mode');
     });
 }
 
@@ -365,7 +412,7 @@ function showLoading(status) {
 }
 
 /* =========================================
-   SISTEMA DE HISTORIAL (UNDO/REDO) UNIVERSAL
+   SISTEMA DE HISTORIAL (UNDO/REDO) MEJORADO
    ========================================= */
 let undoStack = [];
 let redoStack = [];
@@ -375,24 +422,21 @@ function saveHistory() {
     if (isRestoring) return;
     const paper = document.getElementById('paper');
     if (!paper) return;
-    
     const currentHTML = paper.innerHTML;
-    // Solo guardar si es diferente al último estado (evita duplicados innecesarios)
+    
     if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentHTML) {
         undoStack.push(currentHTML);
-        if (undoStack.length > 50) undoStack.shift(); // Ampliado a 50 pasos
+        if (undoStack.length > 60) undoStack.shift(); // Aumentado a 60 pasos
         redoStack = []; 
     }
-    updatePageProgress();
+    updatePageProgress(); 
 }
 
 function historyUndo(e) {
     if (e) e.preventDefault();
     if (undoStack.length > 1) {
         isRestoring = true;
-        // Movemos el estado actual a la pila de rehacer
         redoStack.push(undoStack.pop());
-        // El estado objetivo es el que queda arriba de la pila
         const targetState = undoStack[undoStack.length - 1];
         document.getElementById('paper').innerHTML = targetState;
         saveData();
@@ -412,32 +456,27 @@ function historyRedo(e) {
     }
 }
 
-// ATAJOS DE TECLADO: Ctrl+Z y Ctrl+Y
+// ATAJOS DE TECLADO MEJORADOS
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' || e.key === 'Z') historyUndo(e);
-        if (e.key === 'y' || e.key === 'Y') historyRedo(e);
+        if (e.key.toLowerCase() === 'z') historyUndo(e);
+        if (e.key.toLowerCase() === 'y') historyRedo(e);
     }
 });
 
 function initHistorySystem() {
     const targetNode = document.getElementById('paper');
     if (!targetNode) return;
-
-    // Guardar estado inicial
-    saveHistory();
+    
+    saveHistory(); // Guardar estado inicial
 
     const observer = new MutationObserver(() => {
-        // Retraso para no saturar con cada letra escrita
-        clearTimeout(window.historyTimer);
-        window.historyTimer = setTimeout(saveHistory, 500);
+        // Debounce: espera 400ms después de escribir para guardar el historial
+        clearTimeout(window.hTimer);
+        window.hTimer = setTimeout(saveHistory, 400);
     });
-
-    observer.observe(targetNode, { 
-        childList: true, 
-        subtree: true, 
-        characterData: true 
-    });
+    
+    observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
 }
 
 function addPageBreak() {
@@ -445,11 +484,47 @@ function addPageBreak() {
     const hr = document.createElement('div');
     hr.className = 'page-break-indicator no-print';
     hr.innerHTML = '<span>--- SALTO DE PÁGINA ---</span>';
+    
     const breaker = document.createElement('div');
     breaker.className = 'html2pdf__page-break'; 
     
     container.appendChild(hr);
     container.appendChild(breaker);
     saveData();
-    saveHistory(); // Capturamos el salto de página en el historial
+    saveHistory(); // Guardado para poder deshacer el salto
 }
+
+/* =========================================
+   SISTEMA NOCTURNO (MODO OSCURO)
+   ========================================= */
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    
+    // Guardamos la preferencia para que no se pierda al recargar
+    localStorage.setItem('studio_dark_mode', isDark);
+    
+    // Cambiamos el icono del botón según el estado
+    const btn = document.getElementById('btn-dark-mode');
+    if (btn) btn.innerHTML = isDark ? "☀️" : "🌙";
+}
+
+/* =========================================
+   LIMPIAR FORMATO (EL ÚLTIMO BOTÓN)
+   ========================================= */
+function clearFormatting(event) {
+    if (event) event.preventDefault();
+    restoreSelection();
+    
+    // Comando nativo para quitar negritas, cursivas, etc.
+    document.execCommand('removeFormat', false, null);
+    
+    // Limpieza extra para colores de resaltado que a veces persisten
+    document.execCommand('hiliteColor', false, 'transparent');
+    
+    saveData();
+    saveHistory();
+}
+
+// Cargar preferencia al iniciar (añade esto dentro de window.onload)
+// localStorage.getItem('studio_dark_mode') === 'true' ? toggleDarkMode() : null;

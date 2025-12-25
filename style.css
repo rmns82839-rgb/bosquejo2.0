@@ -1,4 +1,3 @@
-
 /* =========================================
    CONFIGURACIÓN GENERAL
    ========================================= */
@@ -9,7 +8,6 @@ body {
     font-family: 'Times New Roman', Times, serif; 
     color: #1e293b;
     overflow-x: hidden;
-    /* Mejora para permitir selección global */
     user-select: text;
     -webkit-user-select: text;
 }
@@ -22,7 +20,7 @@ body {
     width: 100%;
     height: 5px;
     background: #e2e8f0;
-    z-index: 10001; /* Por encima de todo */
+    z-index: 10001; 
 }
 #page-progress-bar {
     width: 0%;
@@ -72,12 +70,10 @@ body {
     z-index: 10;
     border: 2px solid white;
     user-select: none;
-    /* Mejora visual: */
     transition: transform 0.2s ease;
 }
 #hammer-icon:active { transform: scale(0.95); }
 
-/* Pestañas de activación laterales */
 .side-tab {
     width: 35px; 
     height: 35px; 
@@ -98,7 +94,6 @@ body {
 .left-tab { margin-right: -15px; }
 .right-tab { margin-left: -15px; }
 
-/* Cintas (Alas) */
 .ribbon {
     background: #1e293b;
     height: 50px;
@@ -175,10 +170,7 @@ input[type="color"] {
     border: none;
 }
 
-/* MEJORA RESALTADOR */
-#btn-highlight:hover {
-    background-color: #ffffb0 !important;
-}
+#btn-highlight:hover { background-color: #ffffb0 !important; }
 
 /* =========================================
    PAPEL Y TEXTO (Efecto Studio)
@@ -201,15 +193,12 @@ input[type="color"] {
     box-sizing: border-box;
     transition: all 0.3s ease;
     counter-reset: page; 
-    /* REFUERZO COPIABLE: */
     user-select: text !important;
     -webkit-user-select: text !important;
-    /* Mejora para el footer dinámico: */
     display: flex;
     flex-direction: column;
 }
 
-/* MEJORA: ESTILO PARA EL BLOQUE DE VERSÍCULOS */
 .scripture-block {
     margin: 20px 40px;
     padding: 15px;
@@ -237,7 +226,6 @@ input[type="color"] {
     border-top: 2px solid #f1f5f9; 
     padding-top: 15px;
     position: relative;
-    /* Evita cortes feos en PDF */
     page-break-inside: avoid;
 }
 
@@ -254,7 +242,6 @@ input[type="color"] {
     font-size: 19px; 
     line-height: 1.6; 
     min-height: 1.6em; 
-    /* REFUERZO COPIABLE: */
     user-select: text !important;
 }
 
@@ -264,7 +251,6 @@ input[type="color"] {
     font-style: italic;
 }
 
-/* Subpuntos Especiales */
 .sub-point-container {
     border-left: 2px solid #e2e8f0;
     padding-left: 15px;
@@ -273,7 +259,7 @@ input[type="color"] {
 }
 
 /* =========================================
-   MARCA DE AGUA Y LOGO (Sin bordes)
+   MARCA DE AGUA Y LOGO
    ========================================= */
 #watermark {
     position: absolute;
@@ -292,15 +278,14 @@ input[type="color"] {
     background: transparent !important;
 }
 
-/* FOOTER DEL SERMÓN (MEJORADO) */
+/* FOOTER DEL SERMÓN */
 #sermon-footer {
-    margin-top: auto; /* Empuja el footer siempre al final del contenido */
+    margin-top: auto; 
     padding-top: 30px;
     border-top: 1.5px solid #e2e8f0;
     text-align: center;
     position: relative;
     z-index: 1;
-    /* Asegura que no se rompa en el PDF */
     page-break-inside: avoid;
 }
 .footer-content .verse {
@@ -330,31 +315,32 @@ input[type="color"] {
 }
 
 /* =========================================
-   SISTEMA DE PAGINACIÓN PDF (Contador)
+   AJUSTES PARA PDF COPIABLE (MÁS IMPORTANTE)
    ========================================= */
 @media print {
-    body { 
-        background: white; 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact;
-    }
+    body { background: white !important; }
+    
+    /* Quitamos sombras y efectos que vuelven el texto una "foto" */
     #paper { 
-        margin: 0; 
+        margin: 0 !important; 
         box-shadow: none !important; 
         border: none !important; 
         width: 100% !important;
-        user-select: text !important;
         padding: 15mm !important;
+        transform: none !important;
     }
-    #floating-toolbar, .side-tab, .no-print, #page-progress-container { display: none !important; }
-    
-    /* Forzar visibilidad del footer en impresión */
-    #sermon-footer {
-        display: block !important;
-        opacity: 1 !important;
-        border-top: 1px solid #ccc !important;
+
+    /* Forzamos que el texto sea negro y vectorial */
+    .editable, .scripture-text, .scripture-ref, p, span, div {
+        color: #000000 !important;
+        text-shadow: none !important;
+        filter: none !important;
     }
-    .editable, .footer-content p { color: black !important; }
+
+    #floating-toolbar, .side-tab, .no-print, #page-progress-container, .page-break-indicator { 
+        display: none !important; 
+    }
+
     #paper::after {
         counter-increment: page;
         content: "Página " counter(page);
@@ -364,69 +350,17 @@ input[type="color"] {
         font-size: 10pt;
         color: #94a3b8;
     }
-    
-    #watermark { opacity: 0.04 !important; }
 }
 
 /* =========================================
-   ESTADOS Y RESPONSIVIDAD
+   SALTOS DE PÁGINA
    ========================================= */
-.hidden { 
-    width: 0 !important; 
-    padding: 0 !important; 
-    opacity: 0;
-    pointer-events: none;
-    margin: 0 !important;
-}
-.active-tool {
-    background: #3b82f6 !important;
-    color: white !important;
-}
-.btn-success { background: #10b981 !important; color: white !important; }
-.btn-danger { background: #ef4444 !important; color: white !important; }
-
-.purpose-select {
-    border: 1.5px solid #9b59b6;
-    color: #9b59b6;
-    background: white;
-    min-width: 150px;
-}
-
-@media (max-width: 768px) {
-    #paper { padding: 10mm; width: 98%; margin-top: 110px; }
-    .ribbon { max-width: 55vw; }
-    #hammer-icon { width: 55px; height: 55px; font-size: 24px; }
-    button { padding: 10px 12px; font-size: 14px; }
-    .editable { font-size: 18px; }
-}
-
-#hammer-icon, .side-tab {
-    cursor: move; 
-    touch-action: none; 
-}
-
-.toolbar-docked {
-    opacity: 0.4; 
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.toolbar-docked:hover {
-    opacity: 1; 
-}
-
-/* REFUERZO FINAL PARA COPIADO DE TEXTO EN PDF */
-#paper *, .editable * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-}
-
-/* Esto es lo que html2pdf usará para saltar */
 .html2pdf__page-break {
     display: block;
     height: 0;
     page-break-before: always;
 }
 
-/* Esto es lo que TÚ verás en pantalla para saber dónde termina la hoja */
 .page-break-indicator {
     margin: 40px 0;
     border-top: 2px dashed #3b82f6;
@@ -446,3 +380,11 @@ input[type="color"] {
     left: 50%;
     transform: translateX(-50%);
 }
+
+/* REFUERZO COPIADO */
+#paper *, .editable * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+.hidden { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; margin: 0 !important; }

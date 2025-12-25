@@ -259,15 +259,65 @@ function clearData() {
     }
 }
 
+// MEJORA: PDF con Footer editable, Fecha y Páginas
 function generatePDF() {
     const element = document.getElementById('paper');
+    const fecha = new Date().toLocaleDateString();
+    
+    // Obtener el nombre de la organización si existe en el título o pedir uno
+    let orgName = "Movimiento Misionero Mundial"; 
+    
     const opt = {
-        margin: [10, 10, 15, 10],
-        filename: 'Sermon_Studio.pdf',
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: [10, 10, 25, 10], 
+        filename: 'Bosquejo_MMM_Studio.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true, 
+            logging: false 
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait', 
+            compress: true 
+        }
     };
-    html2pdf().set(opt).from(element).save();
+
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+        const totalPages = pdf.internal.getNumberOfPages();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i);
+            
+            // Línea estética sobre el pie de página (Azul MMM)
+            pdf.setDrawColor(0, 74, 153); 
+            pdf.setLineWidth(0.4);
+            pdf.line(10, pageHeight - 18, pageWidth - 10, pageHeight - 18);
+
+            pdf.setFontSize(8);
+            pdf.setTextColor(100);
+
+            // Izquierda: Organización y Fecha
+            pdf.text(orgName + ' • ' + fecha, 10, pageHeight - 12);
+            
+            // Centro: Nombre del sistema
+            pdf.setFont("helvetica", "italic");
+            pdf.text('MMM Studio Edition 2025', pageWidth / 2, pageHeight - 12, { align: "center" });
+            
+            // Derecha: Numeración
+            pdf.setFont("helvetica", "normal");
+            pdf.text('Página ' + i + ' de ' + totalPages, pageWidth - 10, pageHeight - 12, { align: "right" });
+
+            // Lema final del Salmo
+            pdf.setFontSize(7);
+            pdf.setTextColor(150);
+            pdf.text('"Tu palabra es una lámpara a mis pies..." Salmo 119:105', pageWidth / 2, pageHeight - 8, { align: "center" });
+        }
+    }).save();
 }
 
 /* =========================================

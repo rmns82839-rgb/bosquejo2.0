@@ -8,6 +8,9 @@ body {
     font-family: 'Times New Roman', Times, serif; 
     color: #1e293b;
     overflow-x: hidden;
+    /* Mejora para permitir selección global */
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 /* =========================================
@@ -165,7 +168,10 @@ input[type="color"] {
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     box-sizing: border-box;
     transition: all 0.3s ease;
-    counter-reset: page; /* Inicializa el contador de páginas para el PDF */
+    counter-reset: page; 
+    /* REFUERZO COPIABLE: */
+    user-select: text !important;
+    -webkit-user-select: text !important;
 }
 
 .section-block { 
@@ -184,7 +190,14 @@ input[type="color"] {
     letter-spacing: 1px;
 }
 
-.editable { outline: none; font-size: 19px; line-height: 1.6; min-height: 1.6em; }
+.editable { 
+    outline: none; 
+    font-size: 19px; 
+    line-height: 1.6; 
+    min-height: 1.6em; 
+    /* REFUERZO COPIABLE: */
+    user-select: text !important;
+}
 
 [contenteditable="true"]:empty:before { 
     content: attr(data-placeholder); 
@@ -197,6 +210,7 @@ input[type="color"] {
     border-left: 2px solid #e2e8f0;
     padding-left: 15px;
     margin-bottom: 10px;
+    user-select: text !important;
 }
 
 /* =========================================
@@ -263,11 +277,22 @@ input[type="color"] {
    SISTEMA DE PAGINACIÓN PDF (Contador)
    ========================================= */
 @media print {
-    body { background: white; }
-    #paper { margin: 0; box-shadow: none; border: none; }
+    body { 
+        background: white; 
+        -webkit-print-color-adjust: exact; 
+    }
+    #paper { 
+        margin: 0; 
+        box-shadow: none !important; 
+        border: none !important; 
+        width: 100% !important;
+        user-select: text !important;
+    }
     #floating-toolbar, .side-tab, .no-print { display: none !important; }
+    
+    /* Forzar que el texto sea negro para mejor reconocimiento */
+    .editable, .footer-content p { color: black !important; }
 
-    /* Estilo para el número de página en la base de cada hoja */
     #paper::after {
         counter-increment: page;
         content: "Página " counter(page);
@@ -316,16 +341,21 @@ input[type="color"] {
 }
 
 #hammer-icon, .side-tab {
-    cursor: move; /* Indica que se puede arrastrar */
-    touch-action: none; /* Mejora la respuesta en móviles */
+    cursor: move; 
+    touch-action: none; 
 }
 
-/* Efecto de ocultado automático cuando se pega al borde */
 .toolbar-docked {
-    opacity: 0.4; /* Se vuelve semitransparente */
+    opacity: 0.4; 
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .toolbar-docked:hover {
-    opacity: 1; /* Se ilumina al pasar el mouse o tocarla */
+    opacity: 1; 
+}
+
+/* REFUERZO FINAL PARA COPIADO DE TEXTO EN PDF */
+#paper *, .editable * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
 }
